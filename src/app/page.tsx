@@ -1,10 +1,12 @@
 import KeySignupForm from "@/components/KeySignupForm";
+import Demo from "@/components/Demo";
 
 export default function Home() {
   return (
     <div className="bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       <Nav />
       <Hero />
+      <DemoSection />
       <Features />
       <HowItWorks />
       <Pricing />
@@ -185,6 +187,26 @@ function Hero() {
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Demo ────────────────────────────────────────────────────────────────── */
+
+function DemoSection() {
+  return (
+    <section className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Try it now
+          </h2>
+          <p className="mt-4 text-[#7A8FAD]">
+            Search any UK company. Click a result to see the enriched profile.
+          </p>
+        </div>
+        <Demo />
       </div>
     </section>
   );
@@ -491,7 +513,7 @@ function Footer() {
           <div>
             <div className="text-sm font-semibold text-white">Registrum</div>
             <p className="mt-2 max-w-xs text-xs leading-relaxed text-[#3D5275]">
-              Eugene van der Merwe trading as Registrum. Data sourced under
+              Eugene Merwe-Chartier trading as Registrum. Data sourced under
               the{" "}
               <a
                 href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
