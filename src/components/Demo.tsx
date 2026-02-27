@@ -4,10 +4,15 @@ import { useState, useRef } from "react";
 
 interface SearchResult {
   company_number: string;
-  title: string;
+  company_name: string;
   company_status: string;
   date_of_creation: string;
-  address_snippet: string;
+  registered_office_address?: {
+    premises?: string;
+    address_line_1?: string;
+    locality?: string;
+    postal_code?: string;
+  };
 }
 
 interface CompanyDetail {
@@ -17,10 +22,17 @@ interface CompanyDetail {
   company_type: string;
   date_of_creation: string;
   company_age_years: number;
-  registered_office_address: { address_line_1: string; locality: string; postal_code: string };
-  accounts_overdue: boolean;
-  confirmation_statement_overdue: boolean;
+  registered_office_address?: { address_line_1: string; locality: string; postal_code: string };
+  accounts?: { overdue: boolean; next_accounts_due?: string };
+  confirmation_statement?: { overdue: boolean };
   sic_codes: string[];
+  company_category?: string;
+}
+
+function formatAddress(r: SearchResult): string {
+  const a = r.registered_office_address;
+  if (!a) return "";
+  return [a.premises, a.address_line_1, a.locality, a.postal_code].filter(Boolean).join(", ");
 }
 
 export default function Demo() {
@@ -110,12 +122,12 @@ export default function Demo() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-medium text-white">{r.title}</span>
+                    <span className="truncate font-medium text-white">{r.company_name}</span>
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${r.company_status === "active" ? "bg-[#22D3A0]/10 text-[#22D3A0]" : "bg-white/5 text-[#3D5275]"}`}>
                       {r.company_status}
                     </span>
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-[#3D5275]">{r.address_snippet}</div>
+                  <div className="mt-0.5 truncate text-xs text-[#3D5275]">{formatAddress(r)}</div>
                 </div>
                 <span className="shrink-0 font-[family-name:var(--font-geist-mono)] text-xs text-[#3D5275]">
                   {r.company_number}
@@ -130,7 +142,7 @@ export default function Demo() {
         <p className="mt-4 text-center text-sm text-[#3D5275]">No companies found for &quot;{query}&quot;</p>
       )}
 
-      {/* Company detail */}
+      {/* Company detail loading */}
       {detailLoading && (
         <div className="mt-3 flex items-center justify-center rounded-xl border border-white/[0.08] bg-[#0A1628] py-10">
           <svg className="h-5 w-5 animate-spin text-[#4F7BFF]" fill="none" viewBox="0 0 24 24">
@@ -140,6 +152,7 @@ export default function Demo() {
         </div>
       )}
 
+      {/* Company detail */}
       {selected && (
         <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
           <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4">
@@ -151,10 +164,10 @@ export default function Demo() {
                 </span>
               </div>
               <div className="mt-0.5 text-xs text-[#3D5275]">
-                {selected.registered_office_address?.address_line_1}, {selected.registered_office_address?.locality}, {selected.registered_office_address?.postal_code}
+                {[selected.registered_office_address?.address_line_1, selected.registered_office_address?.locality, selected.registered_office_address?.postal_code].filter(Boolean).join(", ")}
               </div>
             </div>
-            <button onClick={() => { setSelected(null); }} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
+            <button onClick={() => setSelected(null)} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
               ← Back
             </button>
           </div>
@@ -162,7 +175,7 @@ export default function Demo() {
           <div className="grid grid-cols-2 gap-px bg-white/[0.04] sm:grid-cols-4">
             {[
               { label: "Company no.", value: selected.company_number },
-              { label: "Age", value: selected.company_age_years ? `${selected.company_age_years} years` : "—" },
+              { label: "Age", value: selected.company_age_years ? `${selected.company_age_years} yrs` : "—" },
               { label: "Type", value: selected.company_type?.replace(/_/g, " ") ?? "—" },
               { label: "Incorporated", value: selected.date_of_creation ?? "—" },
             ].map((stat) => (
@@ -176,14 +189,14 @@ export default function Demo() {
           <div className="grid grid-cols-2 gap-px bg-white/[0.04]">
             <div className="bg-[#0A1628] px-4 py-3">
               <div className="text-xs text-[#3D5275]">Accounts overdue</div>
-              <div className={`mt-0.5 text-sm font-medium ${selected.accounts_overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
-                {selected.accounts_overdue ? "Yes" : "No"}
+              <div className={`mt-0.5 text-sm font-medium ${selected.accounts?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
+                {selected.accounts?.overdue ? "Yes" : "No"}
               </div>
             </div>
             <div className="bg-[#0A1628] px-4 py-3">
               <div className="text-xs text-[#3D5275]">Confirmation overdue</div>
-              <div className={`mt-0.5 text-sm font-medium ${selected.confirmation_statement_overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
-                {selected.confirmation_statement_overdue ? "Yes" : "No"}
+              <div className={`mt-0.5 text-sm font-medium ${selected.confirmation_statement?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
+                {selected.confirmation_statement?.overdue ? "Yes" : "No"}
               </div>
             </div>
           </div>
