@@ -87,11 +87,14 @@ registrum.co.uk  (Vercel)
 ### Phase 3 — Live Demo
 | # | Task | Status |
 |---|------|--------|
-| 3.1 | Company search input (calls GET /v1/search client-side) | PENDING |
-| 3.2 | Result card — name, number, status, registered address | PENDING |
-| 3.3 | Drill-in: click result → show enriched profile + financials snippet | PENDING |
-| 3.4 | Demo uses a shared demo API key (rate-limited free tier) | PENDING |
-| 3.5 | CTA overlay after 3 lookups: "Get your free key" | PENDING |
+| 3.1 | Company search input (calls GET /v1/search client-side) | DONE |
+| 3.2 | Result card — name, number, status, registered address | DONE |
+| 3.3 | Drill-in: click result → show enriched profile + financials snippet | DONE |
+| 3.4 | Director network graph — even distribution, radial labels, legend | DONE |
+| 3.5 | Demo uses a shared demo API key (rate-limited free tier) | DONE |
+| 3.6 | **BLOCKED — Plan rethink needed**: Demo key is on the free plan (50 calls/mo). A shared marketing key will exhaust this in minutes under any real traffic. Options: (a) exempt the demo key from quota enforcement in the API, (b) create a special `demo` plan tier with no/high quota, (c) move demo key to Pro plan. Decision needed before going live. | BLOCKED |
+| 3.7 | **Surface quota/error states in the demo UI** — currently any API error (quota exceeded, key invalid, 5xx) silently shows "No companies found". Should show a human-readable message e.g. "Demo temporarily unavailable — try again shortly" | PENDING |
+| 3.8 | CTA overlay after 3 lookups: "Get your free key" | PENDING |
 
 ### Phase 4 — API Key Provisioning
 | # | Task | Status |

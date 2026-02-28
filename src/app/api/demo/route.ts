@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
 
     if (directors) {
       const url = `${API_BASE}/v1/company/${directors}/directors`;
-      const res = await fetch(url, { headers, next: { revalidate: 3600 } });
+      const res = await fetch(url, { headers, cache: "no-store" });
       return NextResponse.json(await res.json(), { status: res.status });
     }
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       ? `${API_BASE}/v1/company/${company}`
       : `${API_BASE}/v1/search?q=${encodeURIComponent(q ?? "")}&items_per_page=5`;
 
-    const res = await fetch(url, { headers, next: { revalidate: 60 } });
+    const res = await fetch(url, { headers, cache: "no-store" });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {
