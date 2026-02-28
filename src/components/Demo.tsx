@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import DirectorGraph from "./DirectorGraph";
 
 interface SearchResult {
   company_number: string;
@@ -29,6 +30,12 @@ interface CompanyDetail {
   company_category?: string;
 }
 
+interface Director {
+  name: string;
+  role: string;
+  other_appointments: Array<{ company_number: string; company_name: string; role: string }>;
+}
+
 function formatAddress(r: SearchResult): string {
   const a = r.registered_office_address;
   if (!a) return "";
@@ -43,6 +50,9 @@ export default function Demo() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [isMock, setIsMock] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [tab, setTab] = useState<"overview" | "network">("overview");
+  const [directorsData, setDirectorsData] = useState<Director[] | null>(null);
+  const [directorsLoading, setDirectorsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function search(q: string) {
@@ -70,12 +80,29 @@ export default function Demo() {
   async function selectCompany(number: string) {
     setDetailLoading(true);
     setSelected(null);
+    setTab("overview");
+    setDirectorsData(null);
+    setDirectorsLoading(false);
     try {
       const res = await fetch(`/api/demo?company=${number}`);
       const data = await res.json();
       setSelected(data.data);
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  async function handleTabChange(t: "overview" | "network") {
+    setTab(t);
+    if (t === "network" && directorsData === null && selected) {
+      setDirectorsLoading(true);
+      try {
+        const res = await fetch(`/api/demo?directors=${selected.company_number}`);
+        const data = await res.json();
+        setDirectorsData(data.data?.current_directors ?? []);
+      } finally {
+        setDirectorsLoading(false);
+      }
     }
   }
 
@@ -166,55 +193,88 @@ export default function Demo() {
               <div className="mt-0.5 text-xs text-[#3D5275]">
                 {[selected.registered_office_address?.address_line_1, selected.registered_office_address?.locality, selected.registered_office_address?.postal_code].filter(Boolean).join(", ")}
               </div>
+              <div className="mt-2 flex gap-1">
+                {(["overview", "network"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => handleTabChange(t)}
+                    className={`rounded-full px-2.5 py-0.5 text-xs transition-colors ${
+                      tab === t ? "bg-[#4F7BFF] text-white" : "text-[#3D5275] hover:text-white"
+                    }`}
+                  >
+                    {t === "overview" ? "Overview" : "Director Network"}
+                  </button>
+                ))}
+              </div>
             </div>
             <button onClick={() => setSelected(null)} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
               ← Back
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-px bg-white/[0.04] sm:grid-cols-4">
-            {[
-              { label: "Company no.", value: selected.company_number },
-              { label: "Age", value: selected.company_age_years ? `${selected.company_age_years} yrs` : "—" },
-              { label: "Type", value: selected.company_type?.replace(/_/g, " ") ?? "—" },
-              { label: "Incorporated", value: selected.date_of_creation ?? "—" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-[#0A1628] px-4 py-3">
-                <div className="text-xs text-[#3D5275]">{stat.label}</div>
-                <div className="mt-0.5 font-[family-name:var(--font-geist-mono)] text-sm text-white">{stat.value}</div>
+          {tab === "overview" ? (
+            <>
+              <div className="grid grid-cols-2 gap-px bg-white/[0.04] sm:grid-cols-4">
+                {[
+                  { label: "Company no.", value: selected.company_number },
+                  { label: "Age", value: selected.company_age_years ? `${selected.company_age_years} yrs` : "—" },
+                  { label: "Type", value: selected.company_type?.replace(/_/g, " ") ?? "—" },
+                  { label: "Incorporated", value: selected.date_of_creation ?? "—" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-[#0A1628] px-4 py-3">
+                    <div className="text-xs text-[#3D5275]">{stat.label}</div>
+                    <div className="mt-0.5 font-[family-name:var(--font-geist-mono)] text-sm text-white">{stat.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="grid grid-cols-2 gap-px bg-white/[0.04]">
-            <div className="bg-[#0A1628] px-4 py-3">
-              <div className="text-xs text-[#3D5275]">Accounts overdue</div>
-              <div className={`mt-0.5 text-sm font-medium ${selected.accounts?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
-                {selected.accounts?.overdue ? "Yes" : "No"}
+              <div className="grid grid-cols-2 gap-px bg-white/[0.04]">
+                <div className="bg-[#0A1628] px-4 py-3">
+                  <div className="text-xs text-[#3D5275]">Accounts overdue</div>
+                  <div className={`mt-0.5 text-sm font-medium ${selected.accounts?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
+                    {selected.accounts?.overdue ? "Yes" : "No"}
+                  </div>
+                </div>
+                <div className="bg-[#0A1628] px-4 py-3">
+                  <div className="text-xs text-[#3D5275]">Confirmation overdue</div>
+                  <div className={`mt-0.5 text-sm font-medium ${selected.confirmation_statement?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
+                    {selected.confirmation_statement?.overdue ? "Yes" : "No"}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="bg-[#0A1628] px-4 py-3">
-              <div className="text-xs text-[#3D5275]">Confirmation overdue</div>
-              <div className={`mt-0.5 text-sm font-medium ${selected.confirmation_statement?.overdue ? "text-red-400" : "text-[#22D3A0]"}`}>
-                {selected.confirmation_statement?.overdue ? "Yes" : "No"}
-              </div>
-            </div>
-          </div>
 
-          <div className="px-5 py-4">
-            <div className="text-xs text-[#3D5275]">SIC codes</div>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {(selected.sic_codes ?? []).map((c) => (
-                <span key={c} className="rounded-md border border-white/[0.06] px-2 py-0.5 font-[family-name:var(--font-geist-mono)] text-xs text-[#7A8FAD]">{c}</span>
-              ))}
+              <div className="px-5 py-4">
+                <div className="text-xs text-[#3D5275]">SIC codes</div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {(selected.sic_codes ?? []).map((c) => (
+                    <span key={c} className="rounded-md border border-white/[0.06] px-2 py-0.5 font-[family-name:var(--font-geist-mono)] text-xs text-[#7A8FAD]">{c}</span>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-[#3D5275]">
+                  Your API also returns financials, director networks, and filing history.{" "}
+                  <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="text-[#4F7BFF] hover:underline">
+                    See full docs →
+                  </a>
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="px-5 py-4">
+              {directorsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <svg className="h-5 w-5 animate-spin text-[#4F7BFF]" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                </div>
+              ) : (
+                <DirectorGraph
+                  focalName={selected.company_name}
+                  directors={directorsData ?? []}
+                />
+              )}
             </div>
-            <p className="mt-4 text-xs text-[#3D5275]">
-              Your API also returns financials, director networks, and filing history.{" "}
-              <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="text-[#4F7BFF] hover:underline">
-                See full docs →
-              </a>
-            </p>
-          </div>
+          )}
         </div>
       )}
     </div>

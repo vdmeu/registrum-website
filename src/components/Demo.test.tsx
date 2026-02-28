@@ -22,6 +22,24 @@ const mockSearchResponse = {
   _mock: true,
 };
 
+const mockDirectorsResponse = {
+  status: "success",
+  data: {
+    current_directors: [
+      {
+        name: "Ken Murphy",
+        role: "Chief Executive",
+        appointed_on: "2020-09-01",
+        other_appointments: [
+          { company_number: "02065605", company_name: "TESCO STORES LTD", role: "Director" },
+        ],
+      },
+    ],
+    past_directors: [],
+  },
+  _mock: true,
+};
+
 const mockCompanyResponse = {
   status: "success",
   data: {
@@ -106,6 +124,60 @@ describe("Demo", () => {
         expect(href, `Link "${href}" must use https`).toMatch(/^https:\/\//);
       }
     });
+  });
+
+  it("Director Network tab is visible in detail panel", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response);
+
+    render(<Demo />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
+
+    const companyName = await screen.findByText("TESCO PLC");
+    fireEvent.click(companyName.closest("button")!);
+    await screen.findByText("← Back");
+
+    expect(screen.getByText("Overview")).toBeInTheDocument();
+    expect(screen.getByText("Director Network")).toBeInTheDocument();
+  });
+
+  it("Director Network tab fetches directors and renders SVG graph", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response)
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockDirectorsResponse) } as Response);
+
+    render(<Demo />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
+
+    const companyName = await screen.findByText("TESCO PLC");
+    fireEvent.click(companyName.closest("button")!);
+    await screen.findByText("← Back");
+
+    fireEvent.click(screen.getByText("Director Network"));
+
+    const graph = await screen.findByRole("img", { name: /Director network for TESCO PLC/i });
+    expect(graph).toBeInTheDocument();
+  });
+
+  it("graph aria-label contains the focal company name", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response)
+      .mockResolvedValueOnce({ json: () => Promise.resolve(mockDirectorsResponse) } as Response);
+
+    render(<Demo />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
+
+    const companyName = await screen.findByText("TESCO PLC");
+    fireEvent.click(companyName.closest("button")!);
+    await screen.findByText("← Back");
+
+    fireEvent.click(screen.getByText("Director Network"));
+
+    const graph = await screen.findByRole("img");
+    expect(graph.getAttribute("aria-label")).toContain("TESCO PLC");
   });
 
   it("back button returns to search results list", async () => {

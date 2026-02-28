@@ -5,7 +5,7 @@ vi.mock("next/server", () => ({
   NextResponse: { json: vi.fn() },
 }));
 
-import { MOCK_SEARCH, MOCK_COMPANY, API_BASE } from "./route";
+import { MOCK_SEARCH, MOCK_COMPANY, MOCK_DIRECTORS, API_BASE } from "./route";
 
 describe("MOCK_SEARCH shape", () => {
   it("items have company_name (not title)", () => {
@@ -36,6 +36,31 @@ describe("MOCK_SEARCH shape", () => {
 describe("HTTPS / mixed-content", () => {
   it("API_BASE uses https (not http) to prevent mixed-content browser warnings", () => {
     expect(API_BASE).toMatch(/^https:\/\//);
+  });
+});
+
+describe("MOCK_DIRECTORS shape", () => {
+  it("has current_directors array", () => {
+    expect(Array.isArray(MOCK_DIRECTORS.data.current_directors)).toBe(true);
+    expect(MOCK_DIRECTORS.data.current_directors.length).toBeGreaterThan(0);
+  });
+
+  it("each director has name, role, appointed_on, other_appointments", () => {
+    for (const d of MOCK_DIRECTORS.data.current_directors) {
+      expect(d).toHaveProperty("name");
+      expect(d).toHaveProperty("role");
+      expect(d).toHaveProperty("appointed_on");
+      expect(Array.isArray(d.other_appointments)).toBe(true);
+    }
+  });
+
+  it("other_appointments items have company_number and company_name", () => {
+    for (const d of MOCK_DIRECTORS.data.current_directors) {
+      for (const appt of d.other_appointments) {
+        expect(appt).toHaveProperty("company_number");
+        expect(appt).toHaveProperty("company_name");
+      }
+    }
   });
 });
 

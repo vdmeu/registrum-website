@@ -35,18 +35,79 @@ export const MOCK_COMPANY = {
   _mock: true,
 };
 
+export const MOCK_DIRECTORS = {
+  status: "success",
+  data: {
+    current_directors: [
+      {
+        name: "Ken Murphy",
+        role: "Chief Executive",
+        appointed_on: "2020-09-01",
+        other_appointments: [
+          { company_number: "02065605", company_name: "TESCO STORES LTD", role: "Director" },
+        ],
+      },
+      {
+        name: "Imran Nawaz",
+        role: "Chief Financial Officer",
+        appointed_on: "2021-04-01",
+        other_appointments: [
+          { company_number: "02065605", company_name: "TESCO STORES LTD", role: "Director" },
+          { company_number: "00524764", company_name: "TESCO PERSONAL FINANCE PLC", role: "Director" },
+        ],
+      },
+      {
+        name: "Alison Platt",
+        role: "Non-Executive Director",
+        appointed_on: "2019-01-01",
+        other_appointments: [
+          { company_number: "00524764", company_name: "TESCO PERSONAL FINANCE PLC", role: "Non-Executive" },
+          { company_number: "10458239", company_name: "KINGFISHER PLC", role: "Non-Executive" },
+        ],
+      },
+      {
+        name: "Vindi Banga",
+        role: "Non-Executive Chairman",
+        appointed_on: "2023-03-01",
+        other_appointments: [
+          { company_number: "10458239", company_name: "KINGFISHER PLC", role: "Chairman" },
+        ],
+      },
+      {
+        name: "Stewart Tew",
+        role: "Non-Executive Director",
+        appointed_on: "2021-10-01",
+        other_appointments: [],
+      },
+    ],
+    past_directors: [],
+  },
+  cached: false,
+  _mock: true,
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q");
   const company = searchParams.get("company");
+  const directors = searchParams.get("directors");
 
   if (!DEMO_KEY) {
     // No key configured — return mock data so the demo still works
-    return NextResponse.json(company ? MOCK_COMPANY : MOCK_SEARCH);
+    return NextResponse.json(
+      directors ? MOCK_DIRECTORS : company ? MOCK_COMPANY : MOCK_SEARCH
+    );
   }
 
   try {
     const headers = { "X-API-Key": DEMO_KEY };
+
+    if (directors) {
+      const url = `${API_BASE}/v1/company/${directors}/directors`;
+      const res = await fetch(url, { headers, next: { revalidate: 3600 } });
+      return NextResponse.json(await res.json(), { status: res.status });
+    }
+
     const url = company
       ? `${API_BASE}/v1/company/${company}`
       : `${API_BASE}/v1/search?q=${encodeURIComponent(q ?? "")}&items_per_page=5`;
