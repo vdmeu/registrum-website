@@ -64,7 +64,7 @@ This session was planning + foundation, no application code written yet.
 - **Hosting**: Vercel (free tier sufficient at launch).
 - **Email**: Initially considered Google Workspace — rejected, too expensive. Chose Cloudflare Email Routing + Gmail SMTP instead (£0).
 - **Key provisioning**: Will use existing `ApiKeyService.generate_key()` from `ch-enrichment-api`. New `POST /api/register` Route Handler in this Next.js app → Supabase insert → Resend email. No new infrastructure needed.
-- **Key prefix**: Keep `ch_live_` for now — changing it breaks existing keys. Revisit at v2.
+- **Key prefix**: ~~Keep `ch_live_` for now~~ — **superseded 2026-03-01**: API rebranded to Registrum, all keys now `reg_live_*`. Old `ch_live_*` keys are invalid. Regenerate via `python scripts/create_demo_key.py` in `ch-enrichment-api`.
 - **Running costs at launch**: ~£6.25/mo (domain + email only, everything else free tier).
 - **Legal**: Sole trader trading as Registrum. Open Government Licence v3.0 attribution in footer.
 

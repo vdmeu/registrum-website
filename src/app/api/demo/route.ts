@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export const API_BASE = "https://api.registrum.co.uk";
-const DEMO_KEY = process.env.DEMO_API_KEY;
+const DEMO_KEY = process.env.REGISTRUM_DEMO_API_KEY;
 
-// Shown when no DEMO_API_KEY is set in Vercel env vars
+// Shown when no REGISTRUM_DEMO_API_KEY is set in Vercel env vars
 export const MOCK_SEARCH = {
   status: "success",
   data: {

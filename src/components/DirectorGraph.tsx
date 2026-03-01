@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 
 interface Appointment {
   company_number: string;
@@ -60,6 +60,9 @@ function bezierPath(x1: number, y1: number, x2: number, y2: number) {
 
 export default function DirectorGraph({ focalName, directors }: Props) {
   const [hovered, setHovered] = useState<{ type: "director" | "company"; id: string } | null>(null);
+  const [tooltip, setTooltip] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const { dirNodes, coNodes } = useMemo(() => {
     const n = directors.length;
@@ -171,7 +174,22 @@ export default function DirectorGraph({ focalName, directors }: Props) {
   const focalLine2 = focalWords.length > 1 ? truncate(focalWords.slice(1).join(" "), 8) : null;
 
   return (
-    <>
+    <div
+      ref={wrapperRef}
+      className="relative"
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      }}
+    >
+      {tooltip && (
+        <div
+          className="pointer-events-none absolute z-10 max-w-[200px] rounded border border-[#4F7BFF] bg-[#0A1628] px-2 py-1 text-xs text-white shadow-lg"
+          style={{ left: mousePos.x + 14, top: mousePos.y - 32 }}
+        >
+          {tooltip}
+        </div>
+      )}
       <svg
         viewBox="0 0 600 510"
         className="w-full"
@@ -242,8 +260,8 @@ export default function DirectorGraph({ focalName, directors }: Props) {
             <g
               opacity={coOpacity(co)}
               style={{ transition: "opacity 200ms", cursor: "pointer" }}
-              onMouseEnter={() => setHovered({ type: "company", id: co.company_number })}
-              onMouseLeave={() => setHovered(null)}
+              onMouseEnter={() => { setHovered({ type: "company", id: co.company_number }); setTooltip(co.company_name); }}
+              onMouseLeave={() => { setHovered(null); setTooltip(null); }}
             >
               {hovered?.type === "company" && hovered.id === co.company_number && (
                 <circle cx={co.x} cy={co.y} r={CO_R + 5} fill="none" stroke="#22D3A0" strokeWidth={1} opacity={0.3} />
@@ -281,8 +299,8 @@ export default function DirectorGraph({ focalName, directors }: Props) {
               <g
                 opacity={dirOpacity(dir)}
                 style={{ transition: "opacity 200ms", cursor: "pointer" }}
-                onMouseEnter={() => setHovered({ type: "director", id: dir.id })}
-                onMouseLeave={() => setHovered(null)}
+                onMouseEnter={() => { setHovered({ type: "director", id: dir.id }); setTooltip(dir.name); }}
+                onMouseLeave={() => { setHovered(null); setTooltip(null); }}
               >
                 {hovered?.type === "director" && hovered.id === dir.id && (
                   <circle cx={dir.x} cy={dir.y} r={DIR_R + 5} fill="none" stroke="#22D3A0" strokeWidth={1} opacity={0.3} />
@@ -298,7 +316,11 @@ export default function DirectorGraph({ focalName, directors }: Props) {
         })}
 
         {/* Focal company node — always on top */}
-        <g style={{ animation: "dirGraphNodeIn 400ms ease-out 0ms both" }}>
+        <g
+          style={{ animation: "dirGraphNodeIn 400ms ease-out 0ms both", cursor: "default" }}
+          onMouseEnter={() => setTooltip(focalName)}
+          onMouseLeave={() => setTooltip(null)}
+        >
           <circle cx={CX} cy={CY} r={FOCAL_R} fill="#4F7BFF" />
           <text textAnchor="middle" fontSize={10} fontWeight="bold" fill="white">
             <tspan x={CX} y={focalLine2 ? CY - 4 : CY + 4}>{focalLine1}</tspan>
@@ -330,6 +352,6 @@ export default function DirectorGraph({ focalName, directors }: Props) {
           Also holds directorship at
         </span>
       </div>
-    </>
+    </div>
   );
 }
