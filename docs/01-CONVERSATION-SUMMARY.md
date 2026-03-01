@@ -6,6 +6,47 @@
 
 ---
 
+## 2026-03-01 — Session 3: Rebranding, favicon, graph tooltips, key rotation
+
+### Context
+Parallel API session shipped the Registrum rebranding (key prefix `ch_live_*` → `reg_live_*`, production URL locked to `api.registrum.co.uk`). This website session absorbed those changes and also shipped two UX improvements.
+
+### Key decisions made
+
+- **Env var rename**: `DEMO_API_KEY` → `REGISTRUM_DEMO_API_KEY` — matches the document name the API team suggested; clearer at a glance.
+- **Demo key rotation**: Old `ch_live_*` key was invalid post-rebranding. Deactivated via Supabase PATCH, generated fresh `reg_live_d40c3` via `create_demo_key.py`, set on Vercel. Parallel-session key conflict (`reg_live_05fb4` was re-activated by the other session) resolved by explicitly pinning Supabase to the key stored in Vercel.
+- **Favicon**: SVG-only approach (`src/app/icon.svg`) — Next.js 15 App Router auto-serves it as the browser icon. No binary ICO needed for modern browsers.
+- **Tooltip strategy for graph**: Floating HTML div (not SVG `<title>`) tracking cursor via `onMouseMove` on a wrapper div. Shows full untruncated name for all three node types (focal company, director, outer company).
+- **`.env.example` unblocked from gitignore**: `.env*` wildcard was catching it; added `!.env.example` negation.
+
+### What was built
+
+- `src/app/icon.svg` — geometric R favicon: dark navy rounded square, white stem + D-bowl + diagonal leg, teal (#22D3A0) circle at leg tip referencing the director network nodes
+- `src/components/DirectorGraph.tsx` — hover tooltip: `tooltip` + `mousePos` state, `wrapperRef` div, tooltip fires on all node types
+- `src/app/api/demo/route.ts` — `DEMO_API_KEY` → `REGISTRUM_DEMO_API_KEY`
+- `.env.example` — created with all vars documented including new key format
+- `.gitignore` — `!.env.example` added
+- `docs/WORKING-STATE.md` in `ch-enrichment-api` — fully rewritten to reflect Features 10–13, rebranding, Telegram alerts, 213 tests, new prod URL and key format
+
+### Current state
+- **registrum.co.uk**: live, deployed, smoke tested ✅
+- **Demo**: returning live data (not mock), all three endpoints working ✅
+- **Favicon**: serving `image/svg+xml` from `/icon.svg` ✅
+- **Demo key**: `reg_live_d40c3` active in Supabase, set in Vercel ✅
+- **API project WORKING-STATE.md**: up to date ✅
+
+### What's next
+1. **Key self-service** — wire `KeySignupForm` → `POST /api/register` → Supabase insert → Resend email (Phase 4)
+2. **Demo key quota fix** — 50 calls/mo will exhaust under real traffic; exempt demo key or add `demo` plan tier
+3. **Stripe payments** — tier upgrades (Phase 5)
+
+### Open questions
+- Stripe account not yet created — needed for Phase 5
+- Resend account not yet created — needed for Phase 4
+- Discord + Telegram env vars on Railway — confirm set (`DISCORD_WEBHOOK_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
+
+---
+
 ## 2026-02-27 — Session 2: Infrastructure completion, landing page, tooling
 
 ### Context
