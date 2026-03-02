@@ -42,6 +42,89 @@ function formatAddress(r: SearchResult): string {
   return [a.premises, a.address_line_1, a.locality, a.postal_code].filter(Boolean).join(", ");
 }
 
+function errorMessage(status: number): string {
+  if (status === 429) return "Demo is temporarily busy — try again in a moment.";
+  if (status === 401 || status === 403) return "Demo key unavailable — showing sample data above.";
+  if (status >= 500) return "Registrum is temporarily unavailable. Try again shortly.";
+  if (status === 404) return "Company not found.";
+  return "Something went wrong. Try again shortly.";
+}
+
+/* ─── Skeleton loader for company detail ─────────────────────────────────── */
+
+function DetailSkeleton() {
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628] animate-pulse">
+      <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4">
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-40 rounded bg-white/[0.06]" />
+          <div className="h-3 w-28 rounded bg-white/[0.04]" />
+        </div>
+        <div className="h-3 w-10 rounded bg-white/[0.04]" />
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-white/[0.04] sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-[#0A1628] px-4 py-3">
+            <div className="h-2.5 w-16 rounded bg-white/[0.04]" />
+            <div className="mt-1.5 h-4 w-20 rounded bg-white/[0.06]" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-px bg-white/[0.04]">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="bg-[#0A1628] px-4 py-3">
+            <div className="h-2.5 w-24 rounded bg-white/[0.04]" />
+            <div className="mt-1.5 h-4 w-8 rounded bg-white/[0.06]" />
+          </div>
+        ))}
+      </div>
+      <div className="px-5 py-4">
+        <div className="h-2.5 w-16 rounded bg-white/[0.04]" />
+        <div className="mt-2 flex gap-1.5">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="h-5 w-12 rounded bg-white/[0.06]" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── CTA overlay after 3 lookups ────────────────────────────────────────── */
+
+function CtaOverlay({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[#060D1B]/90 backdrop-blur-sm">
+      <div className="mx-auto max-w-xs px-6 py-8 text-center">
+        <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#22D3A0]/30 bg-[#22D3A0]/10">
+          <svg className="h-5 w-5 text-[#22D3A0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+          </svg>
+        </div>
+        <h3 className="text-base font-semibold text-white">Enjoying the demo?</h3>
+        <p className="mt-2 text-sm text-[#7A8FAD]">
+          Get a free API key and query any UK company — 50 calls per month, no credit card.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <a
+            href="#get-key"
+            onClick={onDismiss}
+            className="rounded-md bg-[#4F7BFF] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
+          >
+            Get your free key →
+          </a>
+          <button
+            onClick={onDismiss}
+            className="text-xs text-[#3D5275] transition-colors hover:text-[#7A8FAD]"
+          >
+            Continue exploring
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Demo() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -50,20 +133,34 @@ export default function Demo() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [isMock, setIsMock] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const [tab, setTab] = useState<"overview" | "network">("overview");
   const [directorsData, setDirectorsData] = useState<Director[] | null>(null);
   const [directorsLoading, setDirectorsLoading] = useState(false);
+  const [showCta, setShowCta] = useState(false);
+  const lookupCount = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function search(q: string) {
-    if (q.trim().length < 2) { setResults([]); setSearched(false); return; }
+    if (q.trim().length < 2) { setResults([]); setSearched(false); setSearchError(null); return; }
     setLoading(true);
     setSelected(null);
+    setSearchError(null);
     try {
       const res = await fetch(`/api/demo?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults(data.data?.items ?? []);
-      setIsMock(!!data._mock);
+      if (!res.ok) {
+        setSearchError(errorMessage(res.status));
+        setResults([]);
+      } else {
+        const data = await res.json();
+        setResults(data.data?.items ?? []);
+        setIsMock(!!data._mock);
+      }
+      setSearched(true);
+    } catch {
+      setSearchError("Network error — check your connection and try again.");
+      setResults([]);
       setSearched(true);
     } finally {
       setLoading(false);
@@ -80,13 +177,25 @@ export default function Demo() {
   async function selectCompany(number: string) {
     setDetailLoading(true);
     setSelected(null);
+    setDetailError(null);
     setTab("overview");
     setDirectorsData(null);
     setDirectorsLoading(false);
     try {
       const res = await fetch(`/api/demo?company=${number}`);
-      const data = await res.json();
-      setSelected(data.data);
+      if (!res.ok) {
+        setDetailError(errorMessage(res.status));
+      } else {
+        const data = await res.json();
+        setSelected(data.data);
+        // Increment lookup count and show CTA after 3rd company detail view
+        lookupCount.current += 1;
+        if (lookupCount.current === 3) {
+          setShowCta(true);
+        }
+      }
+    } catch {
+      setDetailError("Network error — check your connection and try again.");
     } finally {
       setDetailLoading(false);
     }
@@ -137,6 +246,16 @@ export default function Demo() {
         </p>
       )}
 
+      {/* Search error */}
+      {searchError && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-[#F97316]/20 bg-[#F97316]/5 px-4 py-3 text-sm text-[#F97316]">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          {searchError}
+        </div>
+      )}
+
       {/* Results list */}
       {results.length > 0 && !selected && (
         <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
@@ -165,23 +284,29 @@ export default function Demo() {
         </div>
       )}
 
-      {searched && results.length === 0 && !loading && (
+      {searched && results.length === 0 && !loading && !searchError && (
         <p className="mt-4 text-center text-sm text-[#3D5275]">No companies found for &quot;{query}&quot;</p>
       )}
 
-      {/* Company detail loading */}
-      {detailLoading && (
-        <div className="mt-3 flex items-center justify-center rounded-xl border border-white/[0.08] bg-[#0A1628] py-10">
-          <svg className="h-5 w-5 animate-spin text-[#4F7BFF]" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      {/* Company detail skeleton */}
+      {detailLoading && <DetailSkeleton />}
+
+      {/* Company detail error */}
+      {detailError && !detailLoading && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-[#F97316]/20 bg-[#F97316]/5 px-4 py-3 text-sm text-[#F97316]">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
+          {detailError}
         </div>
       )}
 
       {/* Company detail */}
       {selected && (
-        <div className="mt-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
+        <div className="relative mt-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
+          {/* CTA overlay */}
+          {showCta && <CtaOverlay onDismiss={() => setShowCta(false)} />}
+
           <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] px-5 py-4">
             <div>
               <div className="flex items-center gap-2">
@@ -207,7 +332,7 @@ export default function Demo() {
                 ))}
               </div>
             </div>
-            <button onClick={() => setSelected(null)} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
+            <button onClick={() => { setSelected(null); setDetailError(null); }} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
               ← Back
             </button>
           </div>

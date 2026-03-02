@@ -6,6 +6,49 @@
 
 ---
 
+## 2026-03-02 — Session 4: Feature planning + builds (Phases 8–11)
+
+### Context
+User requested three new planned features, plus additional suggestions, added to the build plan and then immediately built without user input (overnight autonomous session).
+
+### What was planned (added to docs/00-BUILD-PLAN.md)
+- **Phase 8**: Developer Quickstart guide (`/quickstart`) — 5-step onboarding, language toggle, live runner, annotated JSON
+- **Phase 9**: Financial data visualisation (`/financials-example`) — P&L waterfall SVG, balance sheet split, data quality grid, YoY comparison bars; uses hardcoded Tesco PLC data
+- **Phase 10**: Enrichment comparison (`/vs-companies-house`) — JSON diff panel (CH API vs Registrum), field-by-field table, code comparison (16 calls → 1)
+- **Phase 11**: Demo fixes — error states (429/5xx/network → human messages), loading skeleton, CTA overlay after 3 lookups
+- **Phase 12**: Language toggle (sitewide curl/Python/Node tabs)
+- **Phase 13**: Status embed (Better Stack badge)
+- **Phase 14**: SEO landing pages (rate limit, financials, iXBRL, director network)
+
+### What was built
+- `src/components/CodeBlock.tsx` — reusable code block with copy button + language tabs (window chrome)
+- `src/app/quickstart/page.tsx` + `QuickstartClient.tsx` — full 5-step guide with sticky sidebar nav, scroll-aware step tracking, live API runner
+- `src/lib/tescoFinancials.ts` — hardcoded Tesco PLC financial data constants + formatters
+- `src/app/financials-example/page.tsx` — P&L waterfall (proportional SVG bars), balance sheet split (stacked bars, hover values), data quality grid (✓/⊘ cells), YoY comparison, full raw JSON accordion
+- `src/app/vs-companies-house/page.tsx` — JSON diff panel (CH muted / Registrum highlighted), comparison table (17 rows), code comparison (16-call CH script vs 2-line Registrum)
+- `src/components/Demo.tsx` — error states surfaced, loading skeleton (animated placeholder cells), CTA overlay after 3rd company detail view
+- `src/app/page.tsx` — Quickstart added to nav, `EnrichmentTeaser` section added (between Features and HowItWorks), financials "See Tesco example →" link added to feature card, `Link` from next/link imported
+- `src/app/sitemap.ts` — `/quickstart`, `/financials-example`, `/vs-companies-house` added
+- `src/components/Demo.test.tsx` — all fetch mocks updated to include `ok: true`
+
+### Build status at end of session
+- `npm run build` ✓ clean — 5 new static routes, all 13 pages generated
+- `npm test` ✓ — 18/18 passing
+
+### What's next (priority order)
+1. **Phase 4** — Key provisioning (wire KeySignupForm → POST /api/register → Supabase + Resend). KeySignupForm is still a stub showing fake success.
+2. **Demo quota fix** — Add `demo` plan tier to API (ch-enrichment-api); move demo key to it. Currently on free (50 calls/mo) — will exhaust under any real traffic.
+3. **Phase 5** — Stripe payments
+4. **Phase 6** — Better Stack status page + /terms, /privacy, DPA
+5. **Phase 7** — Customer dashboard (Supabase Auth + magic link)
+
+### Open items / decisions needed
+- **Tesco financial figures** in `src/lib/tescoFinancials.ts` are cross-checked against public annual report but approximate. Verify against live API (`GET /v1/company/00445790/financials`) before promoting `/financials-example` publicly.
+- **Demo quota** (Phase 11.1): needs API-side fix — add `demo` plan with high/no quota cap. Decision: exempt from quota entirely OR set to e.g. 10,000/mo?
+- **Quickstart live runner** (Step 2) calls `/api/demo?company=00445790` — depends on demo key being functional.
+
+---
+
 ## 2026-03-01 — Session 3: Rebranding, favicon, graph tooltips, key rotation
 
 ### Context

@@ -78,6 +78,7 @@ describe("Demo", () => {
 
   it("shows company names after typing and debounce", async () => {
     vi.spyOn(global, "fetch").mockResolvedValueOnce({
+      ok: true,
       json: () => Promise.resolve(mockSearchResponse),
     } as Response);
 
@@ -89,8 +90,8 @@ describe("Demo", () => {
 
   it("shows detail panel with status badge and SIC codes after selecting a company", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
@@ -106,8 +107,8 @@ describe("Demo", () => {
 
   it("all external links in the detail panel use https (no mixed-content risk)", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
@@ -128,8 +129,8 @@ describe("Demo", () => {
 
   it("Director Network tab is visible in detail panel", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
@@ -144,9 +145,9 @@ describe("Demo", () => {
 
   it("Director Network tab fetches directors and renders SVG graph", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockDirectorsResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockDirectorsResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
@@ -163,9 +164,9 @@ describe("Demo", () => {
 
   it("graph aria-label contains the focal company name", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockDirectorsResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockDirectorsResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });
@@ -182,8 +183,8 @@ describe("Demo", () => {
 
   it("back button returns to search results list", async () => {
     vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockSearchResponse) } as Response)
-      .mockResolvedValueOnce({ json: () => Promise.resolve(mockCompanyResponse) } as Response);
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockSearchResponse) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockCompanyResponse) } as Response);
 
     render(<Demo />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Tesco" } });

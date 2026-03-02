@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import KeySignupForm from "@/components/KeySignupForm";
 import Demo from "@/components/Demo";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -8,6 +10,7 @@ export default function Home() {
       <Hero />
       <DemoSection />
       <Features />
+      <EnrichmentTeaser />
       <HowItWorks />
       <Pricing />
       <CtaBand />
@@ -26,6 +29,12 @@ function Nav() {
           Registrum
         </span>
         <nav className="flex items-center gap-6">
+          <Link
+            href="/quickstart"
+            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
+          >
+            Quickstart
+          </Link>
           <a
             href="https://api.registrum.co.uk/docs"
             target="_blank"
@@ -214,7 +223,16 @@ function DemoSection() {
 
 /* ─── Features ────────────────────────────────────────────────────────────── */
 
-const features = [
+interface Feature {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  tag: string;
+  link?: string;
+  linkLabel?: string;
+}
+
+const features: Feature[] = [
   {
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
@@ -225,6 +243,8 @@ const features = [
     description:
       "iXBRL filings parsed into clean JSON — turnover, net assets, profit/loss, employees. Current and prior year. All values in actual GBP. Explicit data_quality metadata explains exactly what's available and why.",
     tag: "7-day cache",
+    link: "/financials-example",
+    linkLabel: "See Tesco example →",
   },
   {
     icon: (
@@ -293,6 +313,11 @@ function Features() {
               <p className="text-sm leading-relaxed text-[#7A8FAD]">
                 {f.description}
               </p>
+              {f.link && f.linkLabel && (
+                <Link href={f.link} className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
+                  {f.linkLabel}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -468,6 +493,99 @@ function Pricing() {
               </a>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Enrichment Teaser ───────────────────────────────────────────────────── */
+
+const ENRICHMENT_HIGHLIGHTS = [
+  { label: "company_age_years", note: "Computed", color: "#4F7BFF", bg: "rgba(79,123,255,0.10)" },
+  { label: "accounts.overdue", note: "Computed", color: "#4F7BFF", bg: "rgba(79,123,255,0.10)" },
+  { label: "financials.turnover", note: "+new", color: "#22D3A0", bg: "rgba(34,211,160,0.08)" },
+  { label: "financials.net_assets", note: "+new", color: "#22D3A0", bg: "rgba(34,211,160,0.08)" },
+  { label: "financials.employees", note: "+new", color: "#22D3A0", bg: "rgba(34,211,160,0.08)" },
+  { label: "network.companies", note: "+new", color: "#22D3A0", bg: "rgba(34,211,160,0.08)" },
+  { label: "data_quality.completeness", note: "+new", color: "#7A8FAD", bg: "rgba(255,255,255,0.06)" },
+  { label: "cached · credits_remaining", note: "infra", color: "#7A8FAD", bg: "rgba(255,255,255,0.06)" },
+];
+
+function EnrichmentTeaser() {
+  return (
+    <section className="border-y border-white/[0.06] px-6 py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+          {/* Left: copy */}
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#22D3A0]/20 bg-[#22D3A0]/5 px-3 py-1 text-xs font-medium text-[#22D3A0]">
+              Beyond Companies House
+            </div>
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              What you get that you can&apos;t get directly
+            </h2>
+            <p className="mt-4 text-[#7A8FAD]">
+              The raw Companies House API returns about 10 fields. A Registrum response returns
+              over 28 — with financial data, computed fields, and infrastructure built in.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 rounded-full border border-[#4F7BFF]/20 bg-[#4F7BFF]/10 px-3 py-1 text-xs text-[#4F7BFF]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#4F7BFF]" />
+                Computed field
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-[#22D3A0]/20 bg-[#22D3A0]/10 px-3 py-1 text-xs text-[#22D3A0]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#22D3A0]" />
+                New field (not in CH API)
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.04] px-3 py-1 text-xs text-[#7A8FAD]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#7A8FAD]" />
+                Infrastructure
+              </span>
+            </div>
+            <div className="mt-6">
+              <Link
+                href="/vs-companies-house"
+                className="text-sm text-[#4F7BFF] hover:underline"
+              >
+                See the full field-by-field comparison →
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: animated field chips */}
+          <div className="rounded-xl border border-white/[0.08] bg-[#0A1628] p-6">
+            <div className="mb-3 text-xs text-[#3D5275]">Registrum response fields — example</div>
+            <div className="flex flex-wrap gap-2">
+              {/* Standard CH fields (muted) */}
+              {["company_name", "company_number", "company_status", "date_of_creation", "sic_codes"].map((f) => (
+                <span
+                  key={f}
+                  className="rounded border border-white/[0.06] px-2.5 py-1 font-[family-name:var(--font-geist-mono)] text-xs text-[#3D5275]"
+                >
+                  {f}
+                </span>
+              ))}
+              {/* Enriched / new fields */}
+              {ENRICHMENT_HIGHLIGHTS.map((f) => (
+                <span
+                  key={f.label}
+                  className="rounded border px-2.5 py-1 font-[family-name:var(--font-geist-mono)] text-xs"
+                  style={{
+                    color: f.color,
+                    background: f.bg,
+                    borderColor: `${f.color}30`,
+                  }}
+                >
+                  {f.label}
+                  <span className="ml-1.5 opacity-60">{f.note}</span>
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 border-t border-white/[0.06] pt-4 text-xs text-[#3D5275]">
+              5 standard fields (grey) · 8+ enriched/new fields (highlighted)
+            </div>
+          </div>
         </div>
       </div>
     </section>
