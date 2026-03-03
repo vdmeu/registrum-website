@@ -6,6 +6,38 @@
 
 ---
 
+## 2026-03-02 — Session 5: Phase 4, demo quota fix, Phase 6, feature links + mobile fixes
+
+### What was built
+- **Phase 4 — Key provisioning**: `POST /api/register` route handler live. Generates bcrypt-hashed `reg_live_*` key, inserts into Supabase `api_keys` (email stored in `label` column — no schema change needed for MVP), sends delivery email via Resend. Duplicate check: same email → reminder email, no new key. `KeySignupForm.tsx` wired to real endpoint with proper error states.
+- **Env vars added to Vercel via CLI**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`
+- **Demo quota fix**: `ch-enrichment-api/src/api/middleware.py` — one-line change: label `registrum-website-demo` now bypasses monthly quota check. Deployed to Railway.
+- **Phase 6 legal pages**: `/dpa/page.tsx` (full DPA with sub-processor table), `/status/page.tsx` (stub — links to API health endpoint; Better Stack badge TODO for morning). `/terms` and `/privacy` already existed from Session 4.
+- **Director network example** (`/directors-example`): Full-page Tesco PLC director network. Hardcoded data in `src/lib/tescoDirectors.ts` (fetched live 2026-03-02). DirectorGraph component reused. Director table below graph. API call snippet.
+- **Caching visual** (`/caching`): Explains the caching architecture with flow diagrams (raw CH vs Registrum), TTL table, outage timeline with circuit breaker story, code snippet showing stale response headers.
+- **Feature card links**: Director Networks → `/directors-example`, Intelligent Caching → `/caching`, Fuzzy Search → API docs (external). External link detection added to renderer.
+- **Mobile overflow fix**: `overflow-x-hidden` on root div, nav items hidden on mobile (`hidden sm:block`) except CTA button, `overflow-x-auto` on all code/pre blocks, `min-w-0` on hero code panel.
+- **Sitemap updated**: 10 routes including new pages.
+- **Build**: ✓ clean — 18 static/dynamic routes. Tests: 18/18 passing. Deployed to Vercel prod.
+
+### Key decisions
+- Email stored in `label` field for MVP (avoids ALTER TABLE). Dashboard (Phase 7) will need a proper schema migration.
+- Supabase + Resend clients lazy-initialized (not at module level) — required for Next.js build-time compatibility.
+- Better Stack integration parked for tomorrow morning. `/status` page links to API health endpoint as stub.
+
+### What's next (priority order)
+1. **Better Stack** — create account, monitor `https://api.registrum.co.uk/v1/health`, get status page URL. Update `/status/page.tsx` TODO and add badge to footer.
+2. **Phase 5** — Stripe payments (account not yet created)
+3. **Phase 7** — Customer dashboard (Supabase Auth + magic link)
+4. **Tesco financials verification** — verify figures in `src/lib/tescoFinancials.ts` against live API before promoting `/financials-example` publicly
+
+### Open items
+- Better Stack URL: TODO — update `src/app/status/page.tsx` STATUS_PAGE_URL const + add badge to footer
+- Email deliverability: verify Resend is sending from `api@registrum.co.uk` (check Resend DNS/SPF config)
+- `label` = email convention: document this properly before Phase 7 dashboard build
+
+---
+
 ## 2026-03-02 — Session 4: Feature planning + builds (Phases 8–11)
 
 ### Context

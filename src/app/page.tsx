@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
+    <div className="overflow-x-hidden bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       <Nav />
       <Hero />
       <DemoSection />
@@ -28,10 +28,10 @@ function Nav() {
         <span className="text-lg font-semibold tracking-tight text-white">
           Registrum
         </span>
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4 sm:gap-6">
           <Link
             href="/quickstart"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
           >
             Quickstart
           </Link>
@@ -39,13 +39,13 @@ function Nav() {
             href="https://api.registrum.co.uk/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
           >
             Docs
           </a>
           <a
             href="#pricing"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
           >
             Pricing
           </a>
@@ -132,7 +132,7 @@ function Hero() {
           </div>
 
           {/* Right: code block */}
-          <div className="rounded-xl border border-white/[0.08] bg-[#0A1628] p-1">
+          <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#0A1628] p-1">
             {/* Window chrome */}
             <div className="flex items-center gap-2 px-4 py-3">
               <div className="h-3 w-3 rounded-full bg-[#FF5F57]" />
@@ -140,7 +140,7 @@ function Hero() {
               <div className="h-3 w-3 rounded-full bg-[#28C840]" />
               <span className="ml-2 text-xs text-[#3D5275]">terminal</span>
             </div>
-            <div className="rounded-lg bg-[#060D1B] px-5 py-5 font-[family-name:var(--font-geist-mono)] text-sm leading-relaxed">
+            <div className="overflow-x-auto rounded-lg bg-[#060D1B] px-5 py-5 font-[family-name:var(--font-geist-mono)] text-sm leading-relaxed">
               <p className="text-[#3D5275]"># Request</p>
               <p className="mt-1 text-[#7A8FAD]">
                 curl -H{" "}
@@ -256,6 +256,8 @@ const features: Feature[] = [
     description:
       "One endpoint traverses the full board network to 2 degrees. Returns all companies sharing directors, sorted by connection strength. Discover related entities that aren't obvious from a single filing.",
     tag: "24h cache",
+    link: "/directors-example",
+    linkLabel: "See Tesco network →",
   },
   {
     icon: (
@@ -267,6 +269,8 @@ const features: Feature[] = [
     description:
       "24h company profiles, 7-day financials. Stale-while-revalidate during CH outages — you get data even when Companies House is down. Never hit the 600-request rate limit again.",
     tag: "Circuit breaker",
+    link: "/caching",
+    linkLabel: "How it works →",
   },
   {
     icon: (
@@ -278,6 +282,8 @@ const features: Feature[] = [
     description:
       "Name-to-number matching with optional enriched profiles on results. Pass enrich=true to return full company profiles in a single call — no second round-trip required.",
     tag: "1h cache",
+    link: "https://api.registrum.co.uk/docs#/Search/search_companies_v1_search_get",
+    linkLabel: "Search API docs →",
   },
 ];
 
@@ -314,9 +320,15 @@ function Features() {
                 {f.description}
               </p>
               {f.link && f.linkLabel && (
-                <Link href={f.link} className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
-                  {f.linkLabel}
-                </Link>
+                f.link.startsWith("http") ? (
+                  <a href={f.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
+                    {f.linkLabel}
+                  </a>
+                ) : (
+                  <Link href={f.link} className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
+                    {f.linkLabel}
+                  </Link>
+                )
               )}
             </div>
           ))}
@@ -370,7 +382,7 @@ function HowItWorks() {
               <p className="text-sm leading-relaxed text-[#7A8FAD]">
                 {item.description}
               </p>
-              <pre className="mt-2 rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
+              <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
                 {item.code}
               </pre>
             </div>
@@ -650,7 +662,7 @@ function Footer() {
               <span className="font-medium text-[#7A8FAD]">Product</span>
               <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="hover:text-white">Documentation</a>
               <a href="#pricing" className="hover:text-white">Pricing</a>
-              <a href="https://api.registrum.co.uk/v1/health" target="_blank" rel="noopener noreferrer" className="hover:text-white">API Status</a>
+              <a href="https://status.registrum.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white">API Status</a>
             </div>
             <div className="flex flex-col gap-2">
               <span className="font-medium text-[#7A8FAD]">Contact</span>
