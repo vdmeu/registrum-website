@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import KeySignupForm from "@/components/KeySignupForm";
 import Demo from "@/components/Demo";
 import Link from "next/link";
+import CheckoutButton from "@/components/CheckoutButton";
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
       <Features />
       <EnrichmentTeaser />
       <HowItWorks />
+      <StarterKits />
       <Pricing />
       <CtaBand />
       <Footer />
@@ -43,6 +45,18 @@ function Nav() {
           >
             Docs
           </a>
+          <Link
+            href="/use-cases"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
+          >
+            Use Cases
+          </Link>
+          <Link
+            href="/integrations"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
+          >
+            Integrations
+          </Link>
           <a
             href="#pricing"
             className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
@@ -393,6 +407,109 @@ function HowItWorks() {
   );
 }
 
+/* ─── Starter Kits ────────────────────────────────────────────────────────── */
+
+const starterKits = [
+  {
+    lang: "Python",
+    githubUrl: "https://github.com/vdmeu/registrum-python",
+    code: `import requests
+
+res = requests.get(
+    "https://api.registrum.co.uk/v1/company/00445790",
+    headers={"X-API-Key": "rg_live_..."},
+)
+print(res.json())`,
+  },
+  {
+    lang: "Node.js",
+    githubUrl: "https://github.com/vdmeu/registrum-node",
+    code: `const res = await fetch(
+  "https://api.registrum.co.uk/v1/company/00445790",
+  { headers: { "X-API-Key": "rg_live_..." } }
+);
+const data = await res.json();
+console.log(data);`,
+  },
+  {
+    lang: "cURL",
+    githubUrl: null,
+    code: `curl -H "X-API-Key: rg_live_..." \\
+  "https://api.registrum.co.uk/v1/company/00445790"`,
+  },
+];
+
+function StarterKits() {
+  return (
+    <section className="px-6 py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            Start building in 5 lines
+          </h2>
+          <p className="mt-4 text-[#7A8FAD]">
+            Copy-paste examples for the languages you already use.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {starterKits.map((kit) => (
+            <div
+              key={kit.lang}
+              className="flex flex-col rounded-xl border border-white/[0.06] bg-[#0A1628]"
+            >
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <span className="text-sm font-medium text-white">{kit.lang}</span>
+                {kit.githubUrl && (
+                  <a
+                    href={kit.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-[#3D5275] hover:text-[#7A8FAD]"
+                  >
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor">
+                      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                    </svg>
+                    GitHub
+                  </a>
+                )}
+              </div>
+              <pre className="flex-1 overflow-x-auto px-4 py-4 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
+                {kit.code}
+              </pre>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <Link
+            href="/quickstart"
+            className="text-sm text-[#4F7BFF] hover:underline"
+          >
+            Full quickstart guide with response examples →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Beta Coupon ──────────────────────────────────────────────────────────── */
+
+function BetaCoupon() {
+  return (
+    <div className="mb-8 rounded-lg border border-[#22D3A0]/20 bg-[#22D3A0]/5 px-5 py-4">
+      <p className="text-sm text-[#22D3A0]">
+        <span className="font-semibold">Beta access —</span> use code{" "}
+        <span className="rounded bg-[#22D3A0]/15 px-1.5 py-0.5 font-[family-name:var(--font-geist-mono)] font-medium">
+          BETA3
+        </span>{" "}
+        at checkout for 3 months free on Pro. First 20 sign-ups only.
+      </p>
+    </div>
+  );
+}
+
 /* ─── Pricing ─────────────────────────────────────────────────────────────── */
 
 const plans = [
@@ -407,16 +524,6 @@ const plans = [
     features: ["All endpoints", "Financials + networks", "JSON responses", "Email support"],
   },
   {
-    name: "Starter",
-    price: "£19",
-    period: "per month",
-    calls: "500 calls / month",
-    burst: "10 / min",
-    highlight: false,
-    cta: "Get started",
-    features: ["Everything in Free", "5× the quota", "Higher burst rate", "Priority support"],
-  },
-  {
     name: "Pro",
     price: "£49",
     period: "per month",
@@ -424,7 +531,7 @@ const plans = [
     burst: "30 / min",
     highlight: true,
     cta: "Get started",
-    features: ["Everything in Starter", "4× the quota", "High burst rate", "SLA uptime commitment"],
+    features: ["Everything in Free", "40× the quota", "High burst rate", "SLA uptime commitment"],
   },
   {
     name: "Enterprise",
@@ -450,6 +557,8 @@ function Pricing() {
             No setup fees. No hidden costs. Upgrade or cancel any time.
           </p>
         </div>
+
+        <BetaCoupon />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
@@ -493,16 +602,24 @@ function Pricing() {
                 ))}
               </ul>
 
-              <a
-                href={plan.name === "Enterprise" ? "mailto:api@registrum.co.uk" : "#get-key"}
-                className={`mt-auto rounded-md py-2 text-center text-sm font-medium transition-colors ${
-                  plan.highlight
-                    ? "bg-[#4F7BFF] text-white hover:bg-[#6B93FF]"
-                    : "border border-white/10 text-[#E8F0FE] hover:border-white/20 hover:bg-white/5"
-                }`}
-              >
-                {plan.cta}
-              </a>
+              {plan.name === "Pro" ? (
+                <CheckoutButton
+                  className={`mt-auto w-full rounded-md py-2 text-center text-sm font-medium transition-colors bg-[#4F7BFF] text-white hover:bg-[#6B93FF]`}
+                >
+                  {plan.cta}
+                </CheckoutButton>
+              ) : (
+                <a
+                  href={plan.name === "Enterprise" ? "mailto:api@registrum.co.uk" : "#get-key"}
+                  className={`mt-auto rounded-md py-2 text-center text-sm font-medium transition-colors ${
+                    plan.highlight
+                      ? "bg-[#4F7BFF] text-white hover:bg-[#6B93FF]"
+                      : "border border-white/10 text-[#E8F0FE] hover:border-white/20 hover:bg-white/5"
+                  }`}
+                >
+                  {plan.cta}
+                </a>
+              )}
             </div>
           ))}
         </div>
@@ -662,6 +779,8 @@ function Footer() {
               <span className="font-medium text-[#7A8FAD]">Product</span>
               <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="hover:text-white">Documentation</a>
               <a href="#pricing" className="hover:text-white">Pricing</a>
+              <Link href="/use-cases" className="hover:text-white">Use Cases</Link>
+              <Link href="/integrations" className="hover:text-white">Integrations</Link>
               <a href="https://status.registrum.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white">API Status</a>
             </div>
             <div className="flex flex-col gap-2">

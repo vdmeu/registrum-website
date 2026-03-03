@@ -7,6 +7,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: "https://registrum.co.uk/financials-example", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://registrum.co.uk/directors-example", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://registrum.co.uk/vs-companies-house", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: "https://registrum.co.uk/use-cases", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: "https://registrum.co.uk/integrations", lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
     { url: "https://registrum.co.uk/caching", lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: "https://registrum.co.uk/terms", lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
     { url: "https://registrum.co.uk/privacy", lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
