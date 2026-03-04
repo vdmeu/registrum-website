@@ -185,12 +185,46 @@ const ANNOTATED_FIELDS = [
 
 /* ─── Steps config ─────────────────────────────────────────────────────────── */
 
+const MCP_SNIPPETS = [
+  {
+    label: "Claude Desktop",
+    code: `// ~/.claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "registrum": {
+      "command": "npx",
+      "args": ["-y", "@registrum/mcp"],
+      "env": {
+        "REGISTRUM_API_KEY": "reg_live_YOUR_KEY_HERE"
+      }
+    }
+  }
+}`,
+  },
+  {
+    label: "Cursor",
+    code: `// .cursor/mcp.json (project) or ~/.cursor/mcp.json (global)
+{
+  "mcpServers": {
+    "registrum": {
+      "command": "npx",
+      "args": ["-y", "@registrum/mcp"],
+      "env": {
+        "REGISTRUM_API_KEY": "reg_live_YOUR_KEY_HERE"
+      }
+    }
+  }
+}`,
+  },
+];
+
 const STEPS = [
   { id: "register", label: "Register" },
   { id: "first-call", label: "First call" },
   { id: "understand", label: "Understand" },
   { id: "financials", label: "Add financials" },
   { id: "production", label: "Go to production" },
+  { id: "mcp", label: "Use with AI" },
 ];
 
 /* ─── Main component ──────────────────────────────────────────────────────── */
@@ -278,6 +312,14 @@ export default function QuickstartClient() {
             </a>
             <a href="/financials-example" className="mt-1 block hover:text-white">
               Financial data example →
+            </a>
+            <a
+              href="https://www.npmjs.com/package/@registrum/mcp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 block hover:text-white"
+            >
+              MCP server →
             </a>
           </div>
         </nav>
@@ -632,7 +674,7 @@ export default function QuickstartClient() {
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
               <h4 className="text-sm font-medium text-white">Need more calls?</h4>
               <p className="mt-2 text-xs leading-relaxed text-[#7A8FAD]">
-                Free tier: 50 calls/month. Starter (£19/mo): 500 calls. Pro (£49/mo): 2,000 calls.
+                Free tier: 50 calls/month. Pro (£49/mo): 2,000 calls.
                 Enterprise (£149/mo): 10,000 calls. All plans include all endpoints.
               </p>
               <a
@@ -663,6 +705,83 @@ export default function QuickstartClient() {
                 Upgrade plan
               </a>
             </div>
+          </div>
+        </section>
+
+        {/* Step 6: MCP */}
+        <section
+          id="mcp"
+          ref={(el) => { stepRefs.current["mcp"] = el; }}
+          className="scroll-mt-24"
+        >
+          <StepHeader number={6} title="Use with AI (MCP)" time="2 min" />
+          <p className="mt-4 text-[#7A8FAD]">
+            The Registrum MCP server lets you query UK company data directly from{" "}
+            <strong className="text-[#E8F0FE]">Claude Desktop</strong>,{" "}
+            <strong className="text-[#E8F0FE]">Cursor</strong>, and any other MCP-compatible
+            AI client — no code required. Ask questions like{" "}
+            <em className="text-[#E8F0FE]">&quot;Who are the directors of Tesco and what other companies are they on?&quot;</em>{" "}
+            and get live answers backed by Companies House data.
+          </p>
+
+          <p className="mt-3 text-sm text-[#7A8FAD]">
+            Add the following to your AI client config and restart it. Your Registrum API key is used
+            for authentication — the same key you use for direct API calls.
+          </p>
+
+          <CodeBlock
+            code=""
+            languages={MCP_SNIPPETS}
+            className="mt-5"
+          />
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                tool: "search_company",
+                desc: "Find companies by name — returns number, status, address",
+              },
+              {
+                tool: "get_company",
+                desc: "Enriched profile — age, SIC descriptions, overdue flags",
+              },
+              {
+                tool: "get_financials",
+                desc: "Structured P&L + balance sheet from iXBRL filings",
+              },
+              {
+                tool: "get_directors",
+                desc: "Full director history across all appointments",
+              },
+              {
+                tool: "get_network",
+                desc: "Corporate network via shared director connections",
+              },
+            ].map((item) => (
+              <div
+                key={item.tool}
+                className="flex items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+              >
+                <code className="mt-0.5 shrink-0 font-[family-name:var(--font-geist-mono)] text-xs text-[#4F7BFF]">
+                  {item.tool}
+                </code>
+                <span className="text-xs text-[#3D5275]">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-lg border border-[#22D3A0]/20 bg-[#22D3A0]/5 px-4 py-3 text-sm text-[#7A8FAD]">
+            <strong className="text-[#22D3A0]">Install via npx</strong> — no global install needed.
+            The first run downloads the package automatically.
+            Find it on npm:{" "}
+            <a
+              href="https://www.npmjs.com/package/@registrum/mcp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#4F7BFF] hover:underline"
+            >
+              @registrum/mcp
+            </a>
           </div>
         </section>
 

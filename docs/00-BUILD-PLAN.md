@@ -105,14 +105,20 @@ registrum.co.uk  (Vercel)
 | 4.4 | Duplicate prevention — check if email already has an active key | PENDING |
 | 4.5 | Rate limit the register endpoint (1 key per email per 24h) | PENDING |
 
-### Phase 5 — Payments (Stripe)
+### Phase 5 — Payments (Stripe) ✅ SHIPPED (3 Mar 2026)
 | # | Task | Status |
 |---|------|--------|
-| 5.1 | Stripe account setup + products (Starter/Pro/Enterprise) | PENDING |
-| 5.2 | Pricing table → Stripe Checkout links | PENDING |
-| 5.3 | POST /api/stripe/webhook — upgrade Supabase tier on payment | PENDING |
-| 5.4 | Confirmation email on upgrade | PENDING |
-| 5.5 | Cancellation handling — downgrade to free tier | PENDING |
+| 5.1 | Stripe account setup + product (Pro £49/mo) | MANUAL (user action) |
+| 5.2 | Pro pricing card → CheckoutButton → Stripe Checkout | DONE |
+| 5.3 | POST /api/stripe/webhook — provision Pro key on checkout.session.completed | DONE |
+| 5.4 | Pro key delivery email via Resend | DONE |
+| 5.5 | customer.subscription.deleted → downgrade plan to free | DONE |
+| 5.6 | /checkout/success + /checkout/cancel pages | DONE |
+
+> Note: Starter tier (£19/mo) dropped. Pricing is now Free / Pro (£49) / Enterprise (£149).
+> Enterprise stays as "Contact us" mailto — no self-serve checkout.
+> Supabase migration required: `ALTER TABLE api_keys ADD COLUMN stripe_customer_id TEXT; ALTER TABLE api_keys ADD COLUMN stripe_subscription_id TEXT;`
+> Vercel env vars required: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRO_PRICE_ID`
 
 ### Phase 6 — Trust & Credibility
 | # | Task | Status |
@@ -595,6 +601,50 @@ Each page: 500–800 words explaining the problem, with a code example showing R
 
 ---
 
+### Phase 15 — MCP Server ✅ SHIPPED (4 Mar 2026)
+> **Status**: SHIPPED
+> **Goal**: Publish a Node/TypeScript MCP server to npm so developers can query the Registrum API directly from Claude Desktop, Cursor, and other MCP-compatible AI clients.
+
+#### Why this is needed
+MCP (Model Context Protocol) lets AI tools call external APIs as structured tools. A Registrum MCP server means a developer can ask Claude "Who are the directors of Tesco PLC and what other companies are they associated with?" and get a real answer backed by live CH data — without writing any code. This is a high-visibility distribution channel (Claude Desktop has 10M+ users).
+
+#### Proposed tools
+| Tool | Maps to |
+|------|---------|
+| `search_company` | `GET /v1/search?q={name}` |
+| `get_company` | `GET /v1/company/{number}` |
+| `get_financials` | `GET /v1/company/{number}/financials` |
+| `get_directors` | `GET /v1/company/{number}/directors` |
+| `get_network` | `GET /v1/company/{number}/network` |
+
+#### Distribution
+Users add to `~/.claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "registrum": {
+      "command": "npx",
+      "args": ["-y", "@registrum/mcp"],
+      "env": { "REGISTRUM_API_KEY": "reg_live_..." }
+    }
+  }
+}
+```
+
+#### Tasks
+| # | Task | Notes |
+|---|------|-------|
+| 15.1 | Scaffold MCP package — TypeScript, `@modelcontextprotocol/sdk`, build with `tsc` | Standalone repo: github.com/vdmeu/registrum-mcp | ✅ DONE |
+| 15.2 | Implement 5 tools — each calls Registrum API with `REGISTRUM_API_KEY` env var | | ✅ DONE |
+| 15.3 | Add input schema validation (Zod) for each tool | Company number format, search query | ✅ DONE |
+| 15.4 | Add test suite (Vitest, 12 tests, InMemoryTransport + Client) | | ✅ DONE |
+| 15.5 | Publish `@registrum/mcp@1.0.0` to npm | @registrum org created on npmjs.com | ✅ DONE |
+| 15.6 | Add MCP install step to `/quickstart` page | Step 6 "Use with AI (MCP)" | ✅ DONE |
+| 15.7 | Update website homepage Features section | | ✅ DONE |
+| 15.8 | Submit to MCP registries (Smithery, Glama, awesome-mcp-servers, PulseMCP) | glama.json added to repo | IN PROGRESS |
+
+---
+
 ## COPY & POSITIONING
 
 **Headline**: The dependable Companies House API for UK finance.
@@ -611,7 +661,6 @@ Each page: 500–800 words explaining the problem, with a code example showing R
 | Tier | Price | Calls/mo | Burst |
 |------|-------|----------|-------|
 | Free | £0 | 50 | 2/min |
-| Starter | £19 | 500 | 10/min |
 | Pro | £49 | 2,000 | 30/min |
 | Enterprise | £149 | 10,000 | 60/min |
 
