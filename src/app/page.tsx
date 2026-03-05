@@ -31,6 +31,12 @@ function Nav() {
           Registrum
         </span>
         <nav className="flex items-center gap-4 sm:gap-6">
+          <a
+            href="#demo"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
+          >
+            Company Search
+          </a>
           <Link
             href="/quickstart"
             className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
@@ -45,18 +51,6 @@ function Nav() {
           >
             Docs
           </a>
-          <Link
-            href="/use-cases"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Use Cases
-          </Link>
-          <Link
-            href="/integrations"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Integrations
-          </Link>
           <a
             href="#pricing"
             className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
@@ -219,14 +213,14 @@ function Hero() {
 
 function DemoSection() {
   return (
-    <section className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-24">
+    <section id="demo" className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             Try it now
           </h2>
           <p className="mt-4 text-[#7A8FAD]">
-            Search any UK company. Click a result to see the enriched profile.
+            Search any UK company. Click a result to see the full profile — financials, directors, and network.
           </p>
         </div>
         <Demo />
@@ -521,7 +515,21 @@ const plans = [
     burst: "2 / min",
     highlight: false,
     cta: "Get started",
+    ctaHref: "#get-key",
+    plan: null as null | "web" | "pro",
     features: ["All endpoints", "Financials + networks", "JSON responses", "Email support"],
+  },
+  {
+    name: "Web",
+    price: "£9",
+    period: "per month",
+    calls: "Unlimited lookups",
+    burst: "On registrum.co.uk",
+    highlight: false,
+    cta: "Get unlimited lookups",
+    ctaHref: null,
+    plan: "web" as "web",
+    features: ["10 free lookups/day (no card)", "Unlimited with Web plan", "Financials + director network", "No API key needed"],
   },
   {
     name: "Pro",
@@ -531,6 +539,8 @@ const plans = [
     burst: "30 / min",
     highlight: true,
     cta: "Get started",
+    ctaHref: null,
+    plan: "pro" as "pro",
     features: ["Everything in Free", "40× the quota", "High burst rate", "SLA uptime commitment"],
   },
   {
@@ -541,6 +551,8 @@ const plans = [
     burst: "60 / min",
     highlight: false,
     cta: "Contact us",
+    ctaHref: "mailto:api@registrum.co.uk",
+    plan: null as null,
     features: ["Everything in Pro", "5× the quota", "Custom integrations", "Dedicated support"],
   },
 ];
@@ -588,7 +600,7 @@ function Pricing() {
                 <div className="mt-3 text-sm font-medium text-[#E8F0FE]">
                   {plan.calls}
                 </div>
-                <div className="text-xs text-[#3D5275]">Burst: {plan.burst}</div>
+                <div className="text-xs text-[#3D5275]">{plan.name === "Web" ? plan.burst : `Burst: ${plan.burst}`}</div>
               </div>
 
               <ul className="mb-6 flex flex-col gap-2.5">
@@ -602,15 +614,20 @@ function Pricing() {
                 ))}
               </ul>
 
-              {plan.name === "Pro" ? (
+              {plan.plan !== null ? (
                 <CheckoutButton
-                  className={`mt-auto w-full rounded-md py-2 text-center text-sm font-medium transition-colors bg-[#4F7BFF] text-white hover:bg-[#6B93FF]`}
+                  plan={plan.plan}
+                  className={`mt-auto w-full rounded-md py-2 text-center text-sm font-medium transition-colors ${
+                    plan.highlight
+                      ? "bg-[#4F7BFF] text-white hover:bg-[#6B93FF]"
+                      : "border border-white/10 text-[#E8F0FE] hover:border-white/20 hover:bg-white/5"
+                  }`}
                 >
                   {plan.cta}
                 </CheckoutButton>
               ) : (
                 <a
-                  href={plan.name === "Enterprise" ? "mailto:api@registrum.co.uk" : "#get-key"}
+                  href={plan.ctaHref ?? "#get-key"}
                   className={`mt-auto rounded-md py-2 text-center text-sm font-medium transition-colors ${
                     plan.highlight
                       ? "bg-[#4F7BFF] text-white hover:bg-[#6B93FF]"

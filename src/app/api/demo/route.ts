@@ -91,6 +91,7 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get("q");
   const company = searchParams.get("company");
   const directors = searchParams.get("directors");
+  const financials = searchParams.get("financials");
 
   if (!DEMO_KEY) {
     // No key configured — return mock data so the demo still works
@@ -104,6 +105,12 @@ export async function GET(req: NextRequest) {
 
     if (directors) {
       const url = `${API_BASE}/v1/company/${directors}/directors`;
+      const res = await fetch(url, { headers, cache: "no-store" });
+      return NextResponse.json(await res.json(), { status: res.status });
+    }
+
+    if (financials) {
+      const url = `${API_BASE}/v1/company/${financials}/financials`;
       const res = await fetch(url, { headers, cache: "no-store" });
       return NextResponse.json(await res.json(), { status: res.status });
     }

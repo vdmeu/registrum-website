@@ -100,6 +100,18 @@ src/
 - Target: fintech PMs and developers at Series A-B companies
 - Avoid superlatives. Let the demo and docs speak.
 
+## Testing
+
+Cross-service integration tests live in a dedicated repo:
+**`/c/users/eugen/claude-ch-proj/registrum-tests`** · https://github.com/vdmeu/registrum-tests
+
+After shipping a feature or fixing a bug on this site:
+1. Run `npm run test:smoke` from `registrum-tests/` to verify nothing is broken
+2. If the change affects a page route or the demo widget, update the corresponding test in `smoke/website.test.ts` or `e2e/browser.spec.ts`
+3. Run `npm run test:journeys` before any production release
+
+This site has no standalone unit tests — all testing is via the cross-service suite above.
+
 ## Things to Never Do
 
 - Don't add a CMS or i18n — unnecessary complexity

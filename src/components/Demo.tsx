@@ -332,9 +332,17 @@ export default function Demo() {
                 ))}
               </div>
             </div>
-            <button onClick={() => { setSelected(null); setDetailError(null); }} className="shrink-0 text-xs text-[#3D5275] hover:text-white">
-              ← Back
-            </button>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <button onClick={() => { setSelected(null); setDetailError(null); }} className="text-xs text-[#3D5275] hover:text-white">
+                ← Back
+              </button>
+              <a
+                href={`/company/${selected.company_number}`}
+                className="rounded-md bg-[#4F7BFF] px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-[#6B93FF]"
+              >
+                Full profile →
+              </a>
+            </div>
           </div>
 
           {tab === "overview" ? (
