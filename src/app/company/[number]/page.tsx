@@ -27,12 +27,31 @@ interface CompanyProfile {
   sic_codes?: string[];
 }
 
+interface FinancialValue {
+  current?: number | null;
+  prior?: number | null;
+}
+
 interface Financials {
-  turnover?: number;
-  net_assets?: number;
-  employees?: number;
   period_end?: string;
-  data_quality?: { completeness?: string };
+  accounts_type?: string;
+  profit_and_loss?: {
+    turnover?: FinancialValue | null;
+    gross_profit?: FinancialValue | null;
+    profit_before_tax?: FinancialValue | null;
+  };
+  balance_sheet?: {
+    net_assets?: FinancialValue | null;
+    fixed_assets?: FinancialValue | null;
+  };
+  other?: {
+    employees?: FinancialValue | null;
+  };
+  data_quality?: {
+    completeness?: number;
+    accounts_type?: string;
+    has_profit_loss?: boolean;
+  };
 }
 
 interface Director {
@@ -156,6 +175,7 @@ export default async function CompanyPage({
 
   // Fetch financials + directors only when allowed
   let financials: Financials | null = null;
+  let financialsError: string | null = null;
   let directors: Director[] = [];
 
   if (!paywalled) {
@@ -166,6 +186,13 @@ export default async function CompanyPage({
     if (finRes.ok) {
       const finJson = await finRes.json();
       financials = finJson.data ?? null;
+    } else {
+      try {
+        const finJson = await finRes.json();
+        financialsError = finJson.detail ?? null;
+      } catch {
+        financialsError = null;
+      }
     }
     if (dirRes.ok) {
       const dirJson = await dirRes.json();
@@ -331,31 +358,40 @@ export default async function CompanyPage({
                   <div>
                     <div className="text-xs text-[#3D5275]">Turnover</div>
                     <div className="mt-1 text-lg font-semibold text-white">
-                      {fmt(financials.turnover)}
+                      {fmt(financials.profit_and_loss?.turnover?.current ?? undefined)}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-[#3D5275]">Net Assets</div>
                     <div className="mt-1 text-lg font-semibold text-white">
-                      {fmt(financials.net_assets)}
+                      {fmt(financials.balance_sheet?.net_assets?.current ?? undefined)}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-[#3D5275]">Employees</div>
                     <div className="mt-1 text-lg font-semibold text-white">
-                      {fmtNum(financials.employees)}
+                      {fmtNum(financials.other?.employees?.current ?? undefined)}
                     </div>
                   </div>
-                  {financials.data_quality?.completeness && (
+                  {financials.data_quality?.completeness != null && (
                     <div className="col-span-2 sm:col-span-3">
                       <span className="rounded border border-white/[0.06] px-2 py-0.5 text-xs text-[#3D5275]">
-                        Data quality: {financials.data_quality.completeness}
+                        Data quality: {Math.round(financials.data_quality.completeness * 100)}%
+                        {financials.data_quality.accounts_type ? ` · ${financials.data_quality.accounts_type} accounts` : ""}
                       </span>
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-[#3D5275]">No financial data available for this company.</p>
+                <p className="text-sm text-[#3D5275]">
+                  {financialsError
+                    ? financialsError.includes("image-based PDF")
+                      ? "Accounts filed as image-based PDF — structured data not available."
+                      : financialsError.includes("No parseable")
+                        ? "No digital accounts filing found for this company."
+                        : "Financial data not available."
+                    : "No financial data available for this company."}
+                </p>
               )}
             </div>
 
