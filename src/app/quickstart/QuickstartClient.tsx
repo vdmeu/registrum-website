@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import CodeBlock from "@/components/CodeBlock";
+import KeySignupForm from "@/components/KeySignupForm";
 
 /* ─── Code snippets per language ─────────────────────────────────────────── */
 
@@ -341,21 +342,13 @@ export default function QuickstartClient() {
           </p>
           <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
             <p className="text-sm text-[#7A8FAD]">
-              Your key will look like:{" "}
+              Free tier: <strong className="text-[#E8F0FE]">50 calls per month</strong>, all
+              endpoints available. No credit card required. Your key looks like:{" "}
               <code className="font-[family-name:var(--font-geist-mono)] text-[#E8F0FE]">
-                reg_live_a1b2c3d4e5f6...
+                reg_live_a1b2c3...
               </code>
             </p>
-            <p className="mt-2 text-sm text-[#7A8FAD]">
-              Free tier: <strong className="text-[#E8F0FE]">50 calls per month</strong>, all
-              endpoints available. No expiry.
-            </p>
-            <a
-              href="/#get-key"
-              className="mt-5 inline-block rounded-md bg-[#4F7BFF] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-            >
-              Get your free key →
-            </a>
+            <KeySignupForm />
           </div>
           <div className="mt-4 rounded-lg border border-[#22D3A0]/20 bg-[#22D3A0]/5 px-4 py-3 text-sm text-[#7A8FAD]">
             <strong className="text-[#22D3A0]">Tip:</strong> If you just want to explore, the
