@@ -241,6 +241,7 @@ interface Feature {
   tag: string;
   link?: string;
   linkLabel?: string;
+  codeBlock?: string;
 }
 
 const features: Feature[] = [
@@ -296,6 +297,34 @@ const features: Feature[] = [
     link: "https://api.registrum.co.uk/docs#/Search/search_companies_v1_search_get",
     linkLabel: "Search API docs →",
   },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+      </svg>
+    ),
+    title: "Agent-ready Markdown output",
+    description:
+      "Every response includes a summary_md field — pre-formatted GitHub Markdown ready to drop into an LLM prompt or agent context. No parsing, no post-processing.",
+    tag: "summary_md",
+    codeBlock: `## Codeweavers Limited\n**Net profit**: £4.6M (+94% YoY)\n**Net assets**: £9.2M\n**Employees**: 142`,
+    link: "/financials-example",
+    linkLabel: "See example output →",
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+      </svg>
+    ),
+    title: "Use inside Claude and Cursor",
+    description:
+      "Install the MCP server once and your AI agent can look up any UK company directly. Works with Claude Desktop, Cursor, and any MCP-compatible client.",
+    tag: "MCP server",
+    codeBlock: `{\n  "mcpServers": {\n    "registrum": {\n      "command": "npx",\n      "args": ["-y", "@registrum/mcp"]\n    }\n  }\n}`,
+    link: "/quickstart#mcp",
+    linkLabel: "Setup guide →",
+  },
 ];
 
 function Features() {
@@ -304,15 +333,14 @@ function Features() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-16 text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Everything the raw API is missing
+            Built for developers and AI agents
           </h2>
           <p className="mt-4 text-[#7A8FAD]">
-            Built on top of the free Companies House API. We handle the hard
-            parts.
+            Clean JSON for your app. Agent-ready Markdown for your LLM pipeline. MCP tools for Claude and Cursor. No Companies House API key required.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
             <div
               key={f.title}
@@ -330,6 +358,11 @@ function Features() {
               <p className="text-sm leading-relaxed text-[#7A8FAD]">
                 {f.description}
               </p>
+              {f.codeBlock && (
+                <pre className="mt-3 overflow-x-auto rounded-lg bg-[#0A1628] px-3 py-2.5 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
+                  {f.codeBlock}
+                </pre>
+              )}
               {f.link && f.linkLabel && (
                 f.link.startsWith("http") ? (
                   <a href={f.link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
@@ -434,6 +467,22 @@ console.log(data);`,
     code: `curl -H "X-API-Key: rg_live_..." \\
   "https://api.registrum.co.uk/v1/company/00445790"`,
   },
+  {
+    lang: "Claude / MCP",
+    githubUrl: "https://github.com/vdmeu/registrum-mcp",
+    code: `// claude_desktop_config.json
+{
+  "mcpServers": {
+    "registrum": {
+      "command": "npx",
+      "args": ["-y", "@registrum/mcp"],
+      "env": {
+        "REGISTRUM_API_KEY": "rg_live_..."
+      }
+    }
+  }
+}`,
+  },
 ];
 
 function StarterKits() {
@@ -449,7 +498,7 @@ function StarterKits() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {starterKits.map((kit) => (
             <div
               key={kit.lang}
