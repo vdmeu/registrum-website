@@ -340,6 +340,10 @@ export default function QuickstartClient() {
             Enter your email to get a free API key. No credit card required. Your key arrives in
             your inbox within seconds.
           </p>
+          <p className="mt-2 text-sm text-[#3D5275]">
+            No Companies House developer account needed — your Registrum key is the only credential
+            required. Registrum handles the CH API on your behalf.
+          </p>
           <div className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
             <p className="text-sm text-[#7A8FAD]">
               Free tier: <strong className="text-[#E8F0FE]">50 calls per month</strong>, all

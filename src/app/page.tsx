@@ -103,6 +103,9 @@ function Hero() {
               on top of Companies House. Stop wrestling with iXBRL and rate
               limits — get clean JSON in one call.
             </p>
+            <p className="mt-3 max-w-lg text-sm text-[#3D5275]">
+              No Companies House API key needed. One Registrum key covers everything.
+            </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#get-key"

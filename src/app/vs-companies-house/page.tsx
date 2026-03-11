@@ -89,6 +89,12 @@ const COMPARISON_ROWS = [
     note: "new",
   },
   {
+    category: "CH API key registration",
+    ch: { has: false, label: "Register at CH developer portal, manage your own key" },
+    reg: { has: true, label: "No CH key needed — one Registrum key covers everything" },
+    note: "infra",
+  },
+  {
     category: "Rate limit protection",
     ch: { has: false, label: "600 req/5min, errors propagate to your app" },
     reg: { has: true, label: "Cached responses, shared budget shielded" },
