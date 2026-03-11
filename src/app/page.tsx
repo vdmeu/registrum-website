@@ -799,6 +799,7 @@ function Footer() {
               <Link href="/use-cases" className="hover:text-white">Use Cases</Link>
               <Link href="/integrations" className="hover:text-white">Integrations</Link>
               <a href="https://status.registrum.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white">API Status</a>
+              <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
             </div>
             <div className="flex flex-col gap-2">
               <span className="font-medium text-[#7A8FAD]">Contact</span>
@@ -810,12 +811,22 @@ function Footer() {
               <span className="font-medium text-[#7A8FAD]">Legal</span>
               <a href="/terms" className="hover:text-white">Terms of Service</a>
               <a href="/privacy" className="hover:text-white">Privacy Policy</a>
+              <Link href="/dpa" className="hover:text-white">DPA</Link>
             </div>
           </div>
         </div>
 
-        <div className="mt-10 border-t border-white/[0.06] pt-6 text-xs text-[#3D5275]">
-          © {new Date().getFullYear()} Registrum. All rights reserved.
+        <div className="mt-10 flex flex-col items-start gap-4 border-t border-white/[0.06] pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-[#3D5275]">© {new Date().getFullYear()} Registrum. All rights reserved.</p>
+          <a
+            href="https://status.registrum.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs text-[#3D5275] transition-colors hover:text-[#7A8FAD]"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#22D3A0]" />
+            All systems operational
+          </a>
         </div>
       </div>
     </footer>
