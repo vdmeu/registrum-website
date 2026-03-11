@@ -255,7 +255,7 @@ const features: Feature[] = [
       "iXBRL filings parsed into clean JSON — turnover, net assets, profit/loss, employees. Current and prior year. All values in actual GBP. Explicit data_quality metadata explains exactly what's available and why.",
     tag: "7-day cache",
     link: "/financials-example",
-    linkLabel: "See Tesco example →",
+    linkLabel: "See live data example →",
   },
   {
     icon: (
