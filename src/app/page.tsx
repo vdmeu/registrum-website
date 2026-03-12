@@ -3,6 +3,8 @@ import KeySignupForm from "@/components/KeySignupForm";
 import Demo from "@/components/Demo";
 import Link from "next/link";
 import CheckoutButton from "@/components/CheckoutButton";
+import HeroCodeBlock from "@/components/HeroCodeBlock";
+import CodeBlock from "@/components/CodeBlock";
 
 export default function Home() {
   return (
@@ -142,70 +144,8 @@ function Hero() {
             </div>
           </div>
 
-          {/* Right: code block */}
-          <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#0A1628] p-1">
-            {/* Window chrome */}
-            <div className="flex items-center gap-2 px-4 py-3">
-              <div className="h-3 w-3 rounded-full bg-[#FF5F57]" />
-              <div className="h-3 w-3 rounded-full bg-[#FEBC2E]" />
-              <div className="h-3 w-3 rounded-full bg-[#28C840]" />
-              <span className="ml-2 text-xs text-[#3D5275]">terminal</span>
-            </div>
-            <div className="overflow-x-auto rounded-lg bg-[#060D1B] px-5 py-5 font-[family-name:var(--font-geist-mono)] text-sm leading-relaxed">
-              <p className="text-[#3D5275]"># Request</p>
-              <p className="mt-1 text-[#7A8FAD]">
-                curl -H{" "}
-                <span className="text-[#22D3A0]">
-                  &quot;X-API-Key: rg_live_...&quot;
-                </span>{" "}
-                \
-              </p>
-              <p className="text-[#7A8FAD]">
-                &nbsp;&nbsp;
-                <span className="text-[#E8F0FE]">
-                  &quot;https://api.registrum.co.uk/v1/company/00445790&quot;
-                </span>
-              </p>
-              <p className="mt-4 text-[#3D5275]"># Response</p>
-              <p className="mt-1 text-[#7A8FAD]">{"{"}</p>
-              <p className="pl-4">
-                <span className="text-[#4F7BFF]">&quot;company_name&quot;</span>
-                <span className="text-[#7A8FAD]">: </span>
-                <span className="text-[#22D3A0]">&quot;TESCO PLC&quot;</span>
-                <span className="text-[#7A8FAD]">,</span>
-              </p>
-              <p className="pl-4">
-                <span className="text-[#4F7BFF]">
-                  &quot;company_age_years&quot;
-                </span>
-                <span className="text-[#7A8FAD]">: </span>
-                <span className="text-[#F97316]">104</span>
-                <span className="text-[#7A8FAD]">,</span>
-              </p>
-              <p className="pl-4">
-                <span className="text-[#4F7BFF]">&quot;turnover&quot;</span>
-                <span className="text-[#7A8FAD]">: </span>
-                <span className="text-[#F97316]">68190000000</span>
-                <span className="text-[#7A8FAD]">,</span>
-              </p>
-              <p className="pl-4">
-                <span className="text-[#4F7BFF]">
-                  &quot;accounts_overdue&quot;
-                </span>
-                <span className="text-[#7A8FAD]">: </span>
-                <span className="text-[#F97316]">false</span>
-                <span className="text-[#7A8FAD]">,</span>
-              </p>
-              <p className="pl-4">
-                <span className="text-[#4F7BFF]">
-                  &quot;credits_remaining&quot;
-                </span>
-                <span className="text-[#7A8FAD]">: </span>
-                <span className="text-[#F97316]">49</span>
-              </p>
-              <p className="text-[#7A8FAD]">{"}"}</p>
-            </div>
-          </div>
+          {/* Right: code block — language syncs with global tab selection */}
+          <HeroCodeBlock />
         </div>
       </div>
     </section>
@@ -384,6 +324,29 @@ function Features() {
 
 /* ─── How It Works ────────────────────────────────────────────────────────── */
 
+const HOW_IT_WORKS_SNIPPETS = [
+  {
+    label: "curl",
+    code: `curl -H "X-API-Key: reg_live_..." \\
+  "https://api.registrum.co.uk/v1/company/00445790"`,
+  },
+  {
+    label: "Python",
+    code: `import requests
+r = requests.get(
+    "https://api.registrum.co.uk/v1/company/00445790",
+    headers={"X-API-Key": "reg_live_..."},
+)`,
+  },
+  {
+    label: "Node.js",
+    code: `const res = await fetch(
+  "https://api.registrum.co.uk/v1/company/00445790",
+  { headers: { "X-API-Key": "reg_live_..." } }
+);`,
+  },
+];
+
 function HowItWorks() {
   return (
     <section className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-24">
@@ -395,42 +358,39 @@ function HowItWorks() {
         </div>
 
         <div className="grid gap-8 sm:grid-cols-3">
-          {[
-            {
-              step: "01",
-              title: "Get your API key",
-              description:
-                "Enter your email below. Your free key arrives instantly — no credit card, no forms.",
-              code: "# 50 free calls per month\nX-API-Key: rg_live_...",
-            },
-            {
-              step: "02",
-              title: "Make your first call",
-              description:
-                "Pass the API key in the header. Any HTTP client works — curl, Python, Node, whatever you use.",
-              code: 'curl -H "X-API-Key: rg_live_..." \\\n  ".../v1/company/00445790"',
-            },
-            {
-              step: "03",
-              title: "Get clean, structured data",
-              description:
-                "JSON back in milliseconds. Cached, enriched, with explicit metadata about what's available.",
-              code: '{\n  "company_name": "TESCO PLC",\n  "turnover": 68190000000\n}',
-            },
-          ].map((item) => (
-            <div key={item.step} className="flex flex-col gap-4">
-              <div className="text-5xl font-bold text-white/[0.06]">
-                {item.step}
-              </div>
-              <h3 className="font-semibold text-white">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-[#7A8FAD]">
-                {item.description}
-              </p>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
-                {item.code}
-              </pre>
-            </div>
-          ))}
+          {/* Step 01 */}
+          <div className="flex flex-col gap-4">
+            <div className="text-5xl font-bold text-white/[0.06]">01</div>
+            <h3 className="font-semibold text-white">Get your API key</h3>
+            <p className="text-sm leading-relaxed text-[#7A8FAD]">
+              Enter your email below. Your free key arrives instantly — no credit card, no forms.
+            </p>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
+              {"# 50 free calls per month\nX-API-Key: reg_live_..."}
+            </pre>
+          </div>
+
+          {/* Step 02 — language tabs sync with global selection */}
+          <div className="flex flex-col gap-4">
+            <div className="text-5xl font-bold text-white/[0.06]">02</div>
+            <h3 className="font-semibold text-white">Make your first call</h3>
+            <p className="text-sm leading-relaxed text-[#7A8FAD]">
+              Pass the API key in the header. Any HTTP client works — curl, Python, Node, whatever you use.
+            </p>
+            <CodeBlock code="" languages={HOW_IT_WORKS_SNIPPETS} className="mt-2" />
+          </div>
+
+          {/* Step 03 */}
+          <div className="flex flex-col gap-4">
+            <div className="text-5xl font-bold text-white/[0.06]">03</div>
+            <h3 className="font-semibold text-white">Get clean, structured data</h3>
+            <p className="text-sm leading-relaxed text-[#7A8FAD]">
+              JSON back in milliseconds. Cached, enriched, with explicit metadata about what&apos;s available.
+            </p>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
+              {'{\n  "company_name": "TESCO PLC",\n  "turnover": 68190000000\n}'}
+            </pre>
+          </div>
         </div>
       </div>
     </section>

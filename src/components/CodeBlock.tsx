@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "@/lib/language-context";
 
 interface CodeBlockProps {
   code: string;
@@ -12,10 +13,19 @@ interface CodeBlockProps {
 
 export default function CodeBlock({ code, language, languages, className = "" }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(0);
+  const { lang, setLang } = useLanguage();
+
+  // When languages are provided, derive active index from global context.
+  // Fall back to 0 if context lang doesn't match any tab.
+  const contextIdx = languages ? languages.findIndex((l) => l.label === lang) : -1;
+  const activeIdx = languages && contextIdx >= 0 ? contextIdx : 0;
 
   const displayCode = languages ? languages[activeIdx].code : code;
   const displayLabel = languages ? languages[activeIdx].label : language;
+
+  function handleTabClick(idx: number) {
+    if (languages) setLang(languages[idx].label);
+  }
 
   async function handleCopy() {
     try {
@@ -40,17 +50,17 @@ export default function CodeBlock({ code, language, languages, className = "" }:
         {/* Language tabs */}
         {languages ? (
           <div className="ml-2 flex items-center gap-0.5">
-            {languages.map((lang, idx) => (
+            {languages.map((l, idx) => (
               <button
-                key={lang.label}
-                onClick={() => setActiveIdx(idx)}
+                key={l.label}
+                onClick={() => handleTabClick(idx)}
                 className={`rounded px-2 py-0.5 text-xs transition-colors ${
                   idx === activeIdx
                     ? "bg-white/[0.08] text-[#E8F0FE]"
                     : "text-[#3D5275] hover:text-[#7A8FAD]"
                 }`}
               >
-                {lang.label}
+                {l.label}
               </button>
             ))}
           </div>
