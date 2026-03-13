@@ -17,11 +17,11 @@ const cases = [
     sector: "PropTech",
     headline: "Verify corporate landlords and trace beneficial ownership",
     description:
-      "Automated due diligence on corporate landlords, portfolio companies, and property SPVs. Use director networks to surface related entities and UBO chains — without manual Companies House searches.",
+      "Automated due diligence on corporate landlords, portfolio companies, and property SPVs. Resolve who ultimately controls a company using the PSC chain endpoint — without manual Companies House searches.",
     points: [
-      "Identify all companies sharing directors with a target landlord",
+      "Resolve ultimate beneficial owners through multi-layer holding structures via /psc/chain",
+      "Identify all companies sharing directors with a target landlord via /network",
       "Flag overdue accounts or dissolved subsidiaries in a portfolio",
-      "Automate due diligence on buy-to-let corporate structures",
     ],
   },
   {
@@ -33,11 +33,11 @@ const cases = [
     sector: "RegTech / KYB",
     headline: "Know Your Business checks and AML screening at scale",
     description:
-      "Structured company data for compliance workflows — KYB onboarding, AML screening, and sanctions checking. Pull verified financials and director history in a single API call, ready for your compliance engine.",
+      "Structured company data for compliance workflows — KYB onboarding, AML screening, and sanctions checking. Pull verified financials, director history, and beneficial ownership in a single API call, ready for your compliance engine.",
     points: [
-      "Retrieve structured financials for credit and risk assessment",
-      "Director history and disqualification data in one response",
-      "Programmatic onboarding — no manual CH portal lookups",
+      "Resolve UBOs via /psc/chain — decoded control types, active/ceased split, cycle detection",
+      "Retrieve structured financials for credit and risk assessment via /financials",
+      "Director history across all appointments in one response via /directors",
     ],
   },
   {
@@ -124,12 +124,22 @@ export default function UseCasesPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link
-                    href="/quickstart"
-                    className="mt-6 inline-block text-sm text-[#4F7BFF] hover:underline"
-                  >
-                    See how in the quickstart →
-                  </Link>
+                  <div className="mt-6 flex flex-wrap gap-4">
+                    <Link
+                      href="/quickstart"
+                      className="text-sm text-[#4F7BFF] hover:underline"
+                    >
+                      See how in the quickstart →
+                    </Link>
+                    {c.sector === "RegTech / KYB" && (
+                      <Link
+                        href="/beneficial-ownership-api"
+                        className="text-sm text-[#4F7BFF] hover:underline"
+                      >
+                        Beneficial ownership API →
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
