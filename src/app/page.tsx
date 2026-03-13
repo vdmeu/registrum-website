@@ -542,7 +542,7 @@ const plans = [
     cta: "Get started",
     ctaHref: "#get-key",
     plan: null as null | "web" | "pro",
-    features: ["All endpoints", "Financials + networks", "JSON responses", "Email support"],
+    features: ["All endpoints", "Financials + networks", "Beneficial ownership (PSC)", "Email support"],
   },
   {
     name: "Web",
@@ -566,7 +566,7 @@ const plans = [
     cta: "Get started",
     ctaHref: null,
     plan: "pro" as "pro",
-    features: ["Everything in Free", "40× the quota", "High burst rate", "SLA uptime commitment"],
+    features: ["Everything in Free", "40× the quota", "PSC ownership chain resolution", "SLA uptime commitment"],
   },
   {
     name: "Enterprise",
@@ -578,7 +578,7 @@ const plans = [
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
     plan: null as null,
-    features: ["Everything in Pro", "5× the quota", "Custom integrations", "Dedicated support"],
+    features: ["Everything in Pro", "5× the quota", "PSC ownership chain resolution", "Dedicated support"],
   },
 ];
 

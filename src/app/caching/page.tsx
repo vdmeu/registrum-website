@@ -115,6 +115,8 @@ export default function Caching() {
                   ["/v1/company/{number}/financials", "7 days", "Accounts are filed annually; iXBRL parsing is expensive — no point re-parsing daily"],
                   ["/v1/company/{number}/directors", "24 hours", "Appointment changes are filed within days; a 24h window is accurate enough"],
                   ["/v1/company/{number}/network", "24 hours", "Network derives from director data — same cadence"],
+                  ["/v1/company/{number}/psc", "24 hours", "PSC register changes are filed within days; active/ceased split is stable at this cadence"],
+                  ["/v1/company/{number}/psc/chain", "fresh per call", "Chain traverses multiple companies — result depends on live PSC state at each node. Not cached."],
                   ["/v1/search", "1 hour", "Company name/status changes rarely; search index updates are gradual"],
                 ].map(([endpoint, ttl, rationale]) => (
                   <tr key={endpoint} className="hover:bg-white/[0.02]">
