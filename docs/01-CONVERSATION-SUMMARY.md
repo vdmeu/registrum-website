@@ -6,6 +6,62 @@
 
 ---
 
+## 2026-03-13 — Session 7: PSC chain endpoint, KYB integration, MCP v1.2, website PSC content
+
+### What was built (cross-repo)
+
+**ch-enrichment-api**
+- Fixed `_fetch_psc_raw` cache inconsistency (enriched cache format ≠ raw CH format needed by chain). Now fetches fresh raw data from CH API, bypassing the enriched PSC cache entirely.
+- `GET /v1/company/{number}/psc/chain` — BFS chain resolution endpoint. Traverses corporate entity PSCs to find ultimate beneficial owners. Terminal reasons: `natural_person`, `foreign_entity`, `legal_person`, `psc_exempt`, `depth_limit`, `not_found`, `cycle_detected`. 1 credit per company resolved. `max_depth` param (1–10, default 5). Non-fatal: CH API errors produce a `not_found` terminal node.
+- `GET /v1/company/{number}/kyb-report` — extended to include `psc_chain` section. Credits are now dynamic: 3 base + chain credits. Chain resolution runs in parallel with financials and directors via `asyncio.gather`. Chain failure is non-fatal.
+- `tests/conftest.py` updated: `mock_ch_client.get_company_psc.return_value = None` so chain resolves predictably (1 company, not_found, 1 credit) across all non-PSC tests.
+- **408 tests passing** as of last run.
+
+**registrum-mcp**
+- Added `get_psc_chain` tool. Bumped to v1.2.0. Published to npm as `@registrum/mcp@1.2.0`.
+
+**registrum-website**
+- Landing page: PSC feature card added (links to `/psc-example`).
+- `/psc-example` — illustrative 2-level ownership chain (CSS tree), active/ceased PSC tables with decoded natures, chain metadata footer.
+- `/beneficial-ownership-api` — SEO explainer page: problem, solution, terminal reasons table, 6 use-case cards, CTA.
+- `/quickstart` — PSC section added (Step 5 production card, `PSC_SNIPPETS`, `get_psc`/`get_psc_chain` in MCP tools list).
+- `/use-cases` — PropTech and RegTech/KYB cases updated to reference `/psc/chain` and `/psc` endpoints specifically. "Beneficial ownership API →" link added to KYB case.
+- Pricing features: Free tier now lists "Beneficial ownership (PSC)"; Pro/Enterprise list "PSC ownership chain resolution".
+- Caching page: `/psc` (24h TTL) and `/psc/chain` (fresh per call, not cached) rows added to cache TTL table.
+
+### Key decisions
+- **Chain bypasses enriched PSC cache**: Chain classification requires raw CH kind strings (`"individual-person-with-significant-control"` etc.). Enriched cache stores decoded format. Simplest fix: chain always fetches fresh. Appropriate since chain = premium multi-credit call.
+- **`closes #N` auto-closes issues**: Session-end lifecycle no longer includes manual `gh issue close`. Removed from global `~/.claude/CLAUDE.md`.
+- **Chain not cached**: PSC chain resolution fetches live data at each node — result depends on live PSC state at every company in the chain. Caching would require invalidation across all chain nodes.
+
+### Current state
+- All features through PSC chain + KYB integration are live.
+- Only open website issue: #17 (LangChain/CrewAI integration package — low priority).
+- No open CH-Api or MCP issues.
+
+### What's next (priority order)
+
+1. **Stripe payments (website + API)** — Plan upgrades via Stripe Checkout → webhook → Supabase plan update. Website doesn't yet have a checkout flow for pro/enterprise. CH-Api `WORKING-STATE.md` has the spec. Estimated: ~4h end-to-end.
+
+2. **Customer usage dashboard** — Page showing calls over time, remaining quota, current plan, upgrade button. Requires Supabase Auth (magic link) + `usage_logs` query. `label` column currently stores email (MVP shortcut — needs schema migration before this is possible). Estimated: ~6h.
+
+3. **Better Stack status badge (Phase C)** — Add live "Operational" badge to footer. Better Stack badge URL format: `https://uptime.betterstack.com/status-badges/v1/monitor/{MONITOR_ID}.svg`. Full spec in `ch-enrichment-api/docs/WORKING-STATE.md` under "Phase C". Estimated: ~20 min once `MONITOR_ID` is known.
+
+4. **Better Stack ↔ internal probes (Phase B)** — Push `health_monitor.py` probe failures to Better Stack so status page reflects internal degradation. Full spec in `ch-enrichment-api/docs/WORKING-STATE.md`. Estimated: ~2h.
+
+5. **Rate limit headers** — Add `X-RateLimit-Remaining`, `X-RateLimit-Reset` to every API response. Low effort, improves developer experience.
+
+6. **Batch endpoint** — `POST /v1/batch` — multiple company numbers in one call. Medium effort. No issue created yet.
+
+7. **LangChain/CrewAI integration** (website #17) — Low priority. `@registrum/langchain-tools` package. No implementation started.
+
+### Open items
+- `BETTERSTACK_MONITOR_ID` — needed to complete Phase C badge. Get from Better Stack dashboard → Monitors.
+- `label` = email convention in `api_keys` table is a schema shortcut. Must be formalized before building the customer dashboard.
+- Old `nul` file in `ch-enrichment-api` repo root — Windows artifact, should be deleted + gitignored (harmless but untidy).
+
+---
+
 ## 2026-03-02 — Session 5: Phase 4, demo quota fix, Phase 6, feature links + mobile fixes
 
 ### What was built
