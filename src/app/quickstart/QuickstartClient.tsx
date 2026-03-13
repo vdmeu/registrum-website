@@ -123,6 +123,52 @@ console.log(\`\${data.companies.length} connected companies\`);`,
   },
 ];
 
+const PSC_SNIPPETS = [
+  {
+    label: "curl",
+    code: `# Flat PSC register (active/ceased split, decoded control types)
+curl -H "X-API-Key: reg_live_YOUR_KEY_HERE" \\
+  "https://api.registrum.co.uk/v1/company/12345678/psc"
+
+# Ownership chain — resolve to ultimate beneficial owners
+curl -H "X-API-Key: reg_live_YOUR_KEY_HERE" \\
+  "https://api.registrum.co.uk/v1/company/12345678/psc/chain?max_depth=5"`,
+  },
+  {
+    label: "Python",
+    code: `# Flat PSC register
+r = requests.get(
+    "https://api.registrum.co.uk/v1/company/12345678/psc",
+    headers={"X-API-Key": "reg_live_YOUR_KEY_HERE"},
+)
+pscs = r.json()["data"]["active_pscs"]
+
+# Ownership chain — find UBOs
+chain = requests.get(
+    "https://api.registrum.co.uk/v1/company/12345678/psc/chain",
+    params={"max_depth": 5},
+    headers={"X-API-Key": "reg_live_YOUR_KEY_HERE"},
+).json()["data"]
+print(chain["chain_metadata"]["companies_resolved"], "companies resolved")`,
+  },
+  {
+    label: "Node.js",
+    code: `// Flat PSC register
+const psc = await fetch(
+  "https://api.registrum.co.uk/v1/company/12345678/psc",
+  { headers: { "X-API-Key": "reg_live_YOUR_KEY_HERE" } }
+).then(r => r.json());
+const active = psc.data.active_pscs;
+
+// Ownership chain — find UBOs
+const chain = await fetch(
+  "https://api.registrum.co.uk/v1/company/12345678/psc/chain?max_depth=5",
+  { headers: { "X-API-Key": "reg_live_YOUR_KEY_HERE" } }
+).then(r => r.json());
+console.log(chain.data.chain_metadata.total_credits, "credits used");`,
+  },
+];
+
 /* ─── Annotated JSON response ─────────────────────────────────────────────── */
 
 const ANNOTATED_FIELDS = [
@@ -668,17 +714,22 @@ export default function QuickstartClient() {
                 className="mt-3"
               />
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-              <h4 className="text-sm font-medium text-white">Need more calls?</h4>
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 sm:col-span-2">
+              <h4 className="text-sm font-medium text-white">Beneficial ownership (PSC)</h4>
               <p className="mt-2 text-xs leading-relaxed text-[#7A8FAD]">
-                Free tier: 50 calls/month. Pro (£49/mo): 2,000 calls.
-                Enterprise (£149/mo): 10,000 calls. All plans include all endpoints.
+                <code className="font-[family-name:var(--font-geist-mono)] text-[#E8F0FE]">GET /v1/company/{"{number}"}/psc</code>{" "}
+                returns the PSC register with decoded control types and active/ceased split.{" "}
+                <code className="font-[family-name:var(--font-geist-mono)] text-[#E8F0FE]">/psc/chain</code>{" "}
+                recursively traverses corporate entity PSCs to find ultimate beneficial owners.
+                Each company resolved costs 1 credit.
               </p>
-              <a
-                href="/#pricing"
-                className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline"
-              >
-                View pricing →
+              <CodeBlock
+                code=""
+                languages={PSC_SNIPPETS}
+                className="mt-3"
+              />
+              <a href="/psc-example" className="mt-3 inline-block text-xs text-[#4F7BFF] hover:underline">
+                See ownership chain example →
               </a>
             </div>
           </div>
@@ -749,6 +800,14 @@ export default function QuickstartClient() {
               {
                 tool: "get_directors",
                 desc: "Full director history across all appointments",
+              },
+              {
+                tool: "get_psc",
+                desc: "PSC register — decoded control types, active/ceased split",
+              },
+              {
+                tool: "get_psc_chain",
+                desc: "Ownership chain — traverse corporate PSCs to find UBOs",
               },
               {
                 tool: "get_network",
