@@ -847,10 +847,14 @@ function Footer() {
             href="https://status.registrum.co.uk"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1 text-xs text-[#3D5275] transition-colors hover:text-[#7A8FAD]"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#22D3A0]" />
-            All systems operational
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://uptime.betterstack.com/status-badges/v1/monitor/4158135.svg"
+              alt="API status"
+              height="20"
+              style={{ height: 20 }}
+            />
           </a>
         </div>
       </div>
