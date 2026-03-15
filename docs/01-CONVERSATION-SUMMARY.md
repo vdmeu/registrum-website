@@ -6,6 +6,36 @@
 
 ---
 
+## 2026-03-15 — Session 8: Stripe webhook tests, Better Stack badge, rate limit headers
+
+### What was built (cross-repo)
+
+**registrum-website**
+- Stripe webhook tests (`src/app/api/stripe/webhook/route.test.ts`) — 13 tests covering: invalid signature → 400, missing webhook secret → 500, Pro/Web `checkout.session.completed` (key insert shape, email delivery), missing email edge case, Supabase insert failure tolerance, `customer.subscription.deleted` (plan downgrade + web_sessions cleanup), unhandled event type. All 30 website tests passing.
+- Footer: replaced hardcoded "All systems operational" badge with live Better Stack SVG badge (`monitor/4158135.svg`). Updates automatically when API status changes.
+
+**ch-enrichment-api**
+- `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` headers added to every response from a DB-backed key. Reset is a Unix timestamp (1st of next month UTC).
+- `credits_remaining` now populated in the JSON response body (was always null). Achieved by consuming and re-emitting the streaming response in middleware — no route changes needed.
+- Both computed as `max(0, monthly_limit - calls_this_month - 1)`. Dev/env keys get no headers.
+- 4 new rate limit header tests. 412 total passing.
+
+### What's next (priority order)
+
+1. **Customer dashboard** (~6h) — `/dashboard` page showing usage, quota, current plan, upgrade button. Requires Supabase Auth (magic link) + schema migration: `label` column currently stores email as MVP shortcut — needs a proper `email` column before the dashboard can look up a user's key. This is the biggest unlock for paying customers.
+
+2. **Better Stack ↔ internal probes (Phase B)** (~2h) — Push `health_monitor.py` probe failures to Better Stack so the status page goes yellow/red when CH API structure drifts, not just when the API goes fully down. Full spec in `ch-enrichment-api/docs/WORKING-STATE.md`. Needs `BETTERSTACK_API_TOKEN` and `BETTERSTACK_MONITOR_ID` in Railway env vars.
+
+3. **Batch endpoint** (~2h) — `POST /v1/batch` — multiple company numbers in one request. No issue created yet; create one before starting.
+
+4. **LangChain/CrewAI integration** (website #17, low priority) — `@registrum/langchain-tools` npm package. No implementation started.
+
+### Open items
+- `label` = email schema shortcut must be resolved (add proper `email` column to `api_keys`) before building the dashboard. Migration needed in Supabase.
+- `BETTERSTACK_API_TOKEN` and `BETTERSTACK_MONITOR_ID` needed in Railway for Phase B.
+
+---
+
 ## 2026-03-13 — Session 7: PSC chain endpoint, KYB integration, MCP v1.2, website PSC content
 
 ### What was built (cross-repo)
