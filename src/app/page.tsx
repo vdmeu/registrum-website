@@ -103,7 +103,8 @@ function Hero() {
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-[#7A8FAD]">
               Structured financials, director networks, and intelligent caching
               on top of Companies House. Stop wrestling with iXBRL and rate
-              limits — get clean JSON in one call.
+              limits — get clean JSON in one call. Submit 500 companies as a
+              batch and we handle the rest in the background.
             </p>
             <p className="mt-3 max-w-lg text-sm text-[#3D5275]">
               No Companies House API key needed. One Registrum key covers everything.
@@ -277,6 +278,20 @@ const features: Feature[] = [
     codeBlock: `{\n  "mcpServers": {\n    "registrum": {\n      "command": "npx",\n      "args": ["-y", "@registrum/mcp"]\n    }\n  }\n}`,
     link: "/quickstart#mcp",
     linkLabel: "Setup guide →",
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+      </svg>
+    ),
+    title: "Async Batch Enrichment",
+    description:
+      "Submit up to 500 company numbers in one POST. We enrich them in the background, automatically managing the CH API rate limit. Poll for results — no timeouts, no rate-limit errors, no queuing logic on your side.",
+    tag: "500 companies/batch",
+    codeBlock: `POST /v1/batch\n{"company_numbers": ["00445790", ...]}\n\n→ {"batch_id": "3fa85f64-...", "status": "queued"}`,
+    link: "/bulk-enrichment",
+    linkLabel: "How it works →",
   },
 ];
 
@@ -537,12 +552,12 @@ const plans = [
     price: "£0",
     period: "forever",
     calls: "50 calls / month",
-    burst: "2 / min",
+    burst: "10 / min",
     highlight: false,
     cta: "Get started",
     ctaHref: "#get-key",
     plan: null as null | "web" | "pro",
-    features: ["All endpoints", "Financials + networks", "Beneficial ownership (PSC)", "Email support"],
+    features: ["All endpoints", "Financials + networks", "Beneficial ownership (PSC)", "Async batch enrichment", "Email support"],
   },
   {
     name: "Web",
@@ -561,24 +576,24 @@ const plans = [
     price: "£49",
     period: "per month",
     calls: "2,000 calls / month",
-    burst: "30 / min",
+    burst: "100 / min",
     highlight: true,
     cta: "Get started",
     ctaHref: null,
     plan: "pro" as "pro",
-    features: ["Everything in Free", "40× the quota", "PSC ownership chain resolution", "SLA uptime commitment"],
+    features: ["Everything in Free", "40× the quota", "Batch enrichment (500 companies/job)", "PSC ownership chain resolution", "SLA uptime commitment"],
   },
   {
     name: "Enterprise",
     price: "£149",
     period: "per month",
     calls: "10,000 calls / month",
-    burst: "60 / min",
+    burst: "500 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
     plan: null as null,
-    features: ["Everything in Pro", "5× the quota", "PSC ownership chain resolution", "Dedicated support"],
+    features: ["Everything in Pro", "5× the quota", "Batch enrichment (500 companies/job)", "PSC ownership chain resolution", "Dedicated support"],
   },
 ];
 
@@ -821,6 +836,7 @@ function Footer() {
               <span className="font-medium text-[#7A8FAD]">Product</span>
               <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="hover:text-white">Documentation</a>
               <a href="#pricing" className="hover:text-white">Pricing</a>
+              <Link href="/bulk-enrichment" className="hover:text-white">Bulk Enrichment</Link>
               <Link href="/use-cases" className="hover:text-white">Use Cases</Link>
               <Link href="/integrations" className="hover:text-white">Integrations</Link>
               <a href="https://status.registrum.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white">API Status</a>

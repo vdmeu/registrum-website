@@ -170,6 +170,47 @@ export default function Caching() {
         </div>
       </section>
 
+      {/* data_source field */}
+      <section className="px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-3 text-xl font-semibold text-white">The <code className="font-[family-name:var(--font-geist-mono)] text-base text-[#4F7BFF]">data_source</code> field</h2>
+          <p className="mb-8 text-[#7A8FAD]">
+            Every Registrum response includes a <code className="text-[#E8F0FE]">data_source</code> field that tells you exactly where the data came from.
+            Useful for compliance workflows or any use case that cares about data freshness.
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-white/[0.03]">
+                  <th className="px-5 py-3.5 font-medium text-white">Value</th>
+                  <th className="px-5 py-3.5 font-medium text-white">Meaning</th>
+                  <th className="px-5 py-3.5 font-medium text-white">Max data age</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04] text-[#7A8FAD]">
+                {[
+                  ["live", "Fetched from Companies House right now — as fresh as it gets.", "Seconds"],
+                  ["cached", "Served from local cache. The data was fetched recently and is still within its freshness window (< 5 minutes old). No upstream call was made.", "5 minutes"],
+                  ["cached_rate_conserved", "Served from cache because the shared Companies House API budget was above 70% utilisation. A live call was skipped to protect capacity for other requests.", "30 days (profiles), 90 days (financials)"],
+                ].map(([value, meaning, age]) => (
+                  <tr key={value} className="hover:bg-white/[0.02]">
+                    <td className="px-5 py-3.5 font-[family-name:var(--font-geist-mono)] text-xs text-[#E8F0FE] align-top">
+                      {value}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs align-top">{meaning}</td>
+                    <td className="px-5 py-3.5 text-xs align-top whitespace-nowrap text-[#3D5275]">{age}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-xs text-[#3D5275]">
+            <code className="text-[#7A8FAD]">cached_rate_conserved</code> is rare under normal load. It only occurs when the platform is handling a high volume of unique company requests simultaneously.
+            Under typical usage, responses will be <code className="text-[#7A8FAD]">live</code> or <code className="text-[#7A8FAD]">cached</code>.
+          </p>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="px-6 py-16">
         <div className="mx-auto max-w-2xl text-center">
