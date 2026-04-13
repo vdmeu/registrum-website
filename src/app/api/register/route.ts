@@ -131,8 +131,11 @@ function buildEmailHtml(key: string, isResend: boolean): string {
                 <td style="padding:0 12px 0 0">
                   <a href="https://registrum.co.uk/quickstart" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Quickstart guide</a>
                 </td>
-                <td>
+                <td style="padding:0 12px 0 0">
                   <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
+                </td>
+                <td>
+                  <a href="https://registrum.co.uk/dashboard" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">View usage</a>
                 </td>
               </tr>
             </table>

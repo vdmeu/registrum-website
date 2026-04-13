@@ -59,6 +59,12 @@ function Nav() {
           >
             Pricing
           </a>
+          <Link
+            href="/dashboard"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
+          >
+            Dashboard
+          </Link>
           <a
             href="#get-key"
             className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
