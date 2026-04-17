@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Integrations — Registrum",
@@ -327,6 +328,7 @@ tools = [CompanyProfileTool(), CompanySearchTool()]`}</pre>
           </div>
         </div>
       </section>
+      <PageFeedback pageUrl="/integrations" />
     </div>
   );
 }

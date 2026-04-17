@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Bulk Company Enrichment API · Registrum",
@@ -300,6 +301,7 @@ for number, error in job["errors"].items():
           </div>
         </div>
       </section>
+      <PageFeedback pageUrl="/bulk-enrichment" />
     </div>
   );
 }

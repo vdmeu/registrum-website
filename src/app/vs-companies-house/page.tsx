@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Registrum vs Companies House API — What Registrum adds",
@@ -473,6 +474,7 @@ export default function VsCompaniesHousePage() {
             </div>
           </section>
         </div>
+      <PageFeedback pageUrl="/vs-companies-house" />
       </main>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Intelligent Caching · Registrum",
@@ -239,6 +240,7 @@ export default function Caching() {
           </div>
         </div>
       </section>
+      <PageFeedback pageUrl="/caching" />
     </div>
   );
 }

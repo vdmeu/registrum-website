@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import KeySignupForm from "@/components/KeySignupForm";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Director Network API — Companies House Connections | Registrum",
@@ -289,6 +290,7 @@ export default function DirectorNetworkApiPage() {
             <KeySignupForm />
           </div>
         </section>
+      <PageFeedback pageUrl="/director-network-api" />
       </main>
 
       <footer className="border-t border-white/[0.06] px-6 py-8">

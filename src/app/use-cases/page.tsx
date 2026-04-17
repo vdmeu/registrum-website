@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Use Cases — Registrum",
@@ -164,6 +165,7 @@ export default function UseCasesPage() {
           </a>
         </div>
       </section>
+      <PageFeedback pageUrl="/use-cases" />
     </div>
   );
 }

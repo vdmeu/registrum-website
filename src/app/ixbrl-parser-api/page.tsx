@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import KeySignupForm from "@/components/KeySignupForm";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "iXBRL Parser API for UK Company Accounts | Registrum",
@@ -268,6 +269,7 @@ export default function IxbrlParserApiPage() {
             <KeySignupForm />
           </div>
         </section>
+      <PageFeedback pageUrl="/ixbrl-parser-api" />
       </main>
 
       <footer className="border-t border-white/[0.06] px-6 py-8">

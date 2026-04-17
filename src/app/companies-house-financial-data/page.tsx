@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import KeySignupForm from "@/components/KeySignupForm";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Companies House Financial Data API — Structured JSON | Registrum",
@@ -276,6 +277,7 @@ export default function CompaniesHouseFinancialDataPage() {
             <KeySignupForm />
           </div>
         </section>
+      <PageFeedback pageUrl="/companies-house-financial-data" />
       </main>
 
       <footer className="border-t border-white/[0.06] px-6 py-8">

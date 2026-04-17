@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import KeySignupForm from "@/components/KeySignupForm";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "UK Beneficial Ownership API — PSC Chain Resolution | Registrum",
@@ -339,6 +340,7 @@ X-API-Key: reg_live_...`}
           </p>
         </div>
       </section>
+      <PageFeedback pageUrl="/beneficial-ownership-api" />
     </div>
   );
 }

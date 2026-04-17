@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import QuickstartClient from "./QuickstartClient";
+import PageFeedback from "@/app/components/PageFeedback";
 
 export const metadata: Metadata = {
   title: "Quickstart — Registrum API",
@@ -25,6 +26,7 @@ export default function QuickstartPage() {
           </p>
         </div>
         <QuickstartClient />
+        <PageFeedback pageUrl="/quickstart" />
       </main>
     </div>
   );
