@@ -53,6 +53,12 @@ function Nav() {
           >
             Docs
           </a>
+          <Link
+            href="/eccta-verification"
+            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
+          >
+            ECCTA
+          </Link>
           <a
             href="#pricing"
             className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
@@ -109,8 +115,9 @@ function Hero() {
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-[#7A8FAD]">
               Structured financials, director networks, and intelligent caching
               on top of Companies House. Stop wrestling with iXBRL and rate
-              limits — get clean JSON in one call. Submit 500 companies as a
-              batch and we handle the rest in the background.
+              limits - get clean JSON in one call. Submit 500 companies as a
+              batch and we handle the rest in the background. Now with ECCTA
+              identity verification compliance monitoring.
             </p>
             <p className="mt-3 max-w-lg text-sm text-[#3D5275]">
               No Companies House API key needed. One Registrum key covers everything.
@@ -217,6 +224,19 @@ const features: Feature[] = [
     tag: "24h cache",
     link: "/directors-example",
     linkLabel: "See Tesco network →",
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+      </svg>
+    ),
+    title: "ECCTA Identity Verification",
+    description:
+      "Monitor director and PSC verification compliance under the Economic Crime and Corporate Transparency Act 2023. One API call returns a risk rating, verified count, and list of unverified persons - sourced directly from Companies House.",
+    tag: "Pro/Enterprise",
+    link: "/eccta-verification",
+    linkLabel: "ECCTA compliance demo →",
   },
   {
     icon: (
