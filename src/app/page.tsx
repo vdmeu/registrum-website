@@ -144,7 +144,7 @@ function Hero() {
               {[
                 { value: "24h", label: "Company cache" },
                 { value: "7d", label: "Financials cache" },
-                { value: "50", label: "Free calls/month" },
+                { value: "5", label: "Free lookups/day" },
               ].map((stat) => (
                 <div key={stat.label}>
                   <div className="text-2xl font-semibold text-white">
@@ -177,7 +177,7 @@ function DemoSection() {
             Try it now
           </h2>
           <p className="mt-4 text-[#7A8FAD]">
-            Search any UK company. Click a result to see the full profile — financials, directors, and network.
+            Search from our demo companies below. Sign up for a free key to query any UK company — 5 real lookups/day.
           </p>
         </div>
         <Demo />
@@ -420,7 +420,7 @@ function HowItWorks() {
               Enter your email below. Your free key arrives instantly — no credit card, no forms.
             </p>
             <pre className="mt-2 overflow-x-auto rounded-lg bg-[#0A1628] px-4 py-3 font-[family-name:var(--font-geist-mono)] text-xs leading-relaxed text-[#7A8FAD]">
-              {"# 50 free calls per month\nX-API-Key: reg_live_..."}
+              {"# 5 free calls/day — no credit card\nX-API-Key: reg_live_..."}
             </pre>
           </div>
 
@@ -570,6 +570,60 @@ function BetaCoupon() {
   );
 }
 
+/* ─── Feature Matrix ─────────────────────────────────────────────────────── */
+
+const featureRows: { name: string; free: boolean | string; web: boolean | string; pro: boolean | string; ent: boolean | string }[] = [
+  { name: "Company profile & filings",        free: true,  web: true,  pro: true,  ent: true  },
+  { name: "Director list",                    free: true,  web: true,  pro: true,  ent: true  },
+  { name: "Structured financials (iXBRL)",    free: true,  web: true,  pro: true,  ent: true  },
+  { name: "Fuzzy company search",             free: true,  web: true,  pro: true,  ent: true  },
+  { name: "PSC beneficial ownership",         free: true,  web: true,  pro: true,  ent: true  },
+  { name: "Async batch enrichment",           free: "quota-limited",  web: "quota-limited",  pro: true,  ent: true  },
+  { name: "Director network (depth 1)",       free: true,  web: true,  pro: true,  ent: true  },
+  { name: "Director network (depth 2)",       free: false, web: false, pro: true,  ent: true  },
+  { name: "PSC chain & UBO traversal",        free: false, web: false, pro: true,  ent: true  },
+  { name: "ECCTA compliance monitoring",      free: false, web: false, pro: true,  ent: true  },
+  { name: "KYB pack",                         free: false, web: false, pro: true,  ent: true  },
+  { name: "SLA uptime commitment",            free: false, web: false, pro: true,  ent: true  },
+];
+
+function FeatureCell({ val }: { val: boolean | string }) {
+  if (val === true) return <span className="text-[#22D3A0]">&#10003;</span>;
+  if (val === false) return <span className="text-[#3D5275]">&#8212;</span>;
+  return <span className="text-xs text-[#7A8FAD]">{val}</span>;
+}
+
+function FeatureMatrix() {
+  return (
+    <div className="mt-12 overflow-x-auto rounded-xl border border-white/[0.06]">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-white/[0.06] bg-white/[0.03]">
+            <th className="px-5 py-3.5 text-left font-medium text-white">Feature</th>
+            {["Free", "Web", "Pro", "Enterprise"].map((h) => (
+              <th key={h} className="px-4 py-3.5 text-center font-medium text-white">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/[0.04]">
+          {featureRows.map((row) => (
+            <tr key={row.name} className="hover:bg-white/[0.02]">
+              <td className="px-5 py-3 text-[#7A8FAD]">{row.name}</td>
+              <td className="px-4 py-3 text-center"><FeatureCell val={row.free} /></td>
+              <td className="px-4 py-3 text-center"><FeatureCell val={row.web} /></td>
+              <td className="px-4 py-3 text-center"><FeatureCell val={row.pro} /></td>
+              <td className="px-4 py-3 text-center"><FeatureCell val={row.ent} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="border-t border-white/[0.06] px-5 py-3 text-xs text-[#3D5275]">
+        Batch enrichment consumes credits per company processed (1 credit each). Free and Web plans are quota-limited by their monthly allowance. Director network depth 2 and PSC chain are Pro/Enterprise only as each request can consume up to 30+ upstream API calls.
+      </p>
+    </div>
+  );
+}
+
 /* ─── Pricing ─────────────────────────────────────────────────────────────── */
 
 const plans = [
@@ -577,49 +631,49 @@ const plans = [
     name: "Free",
     price: "£0",
     period: "forever",
-    calls: "50 calls / month",
+    calls: "5 lookups / day",
     burst: "10 / min",
     highlight: false,
     cta: "Get started",
     ctaHref: "#get-key",
     plan: null as null | "web" | "pro",
-    features: ["All endpoints", "Financials + networks", "Beneficial ownership (PSC)", "Async batch enrichment", "Email support"],
+    features: ["All core endpoints", "Financials + director network", "PSC beneficial ownership", "Async batch (quota-limited)", "Email support"],
   },
   {
     name: "Web",
-    price: "£9",
+    price: "£19",
     period: "per month",
-    calls: "Unlimited lookups",
-    burst: "On registrum.co.uk",
+    calls: "500 calls / month",
+    burst: "30 / min",
     highlight: false,
-    cta: "Get unlimited lookups",
+    cta: "Get started",
     ctaHref: null,
     plan: "web" as "web",
-    features: ["10 free lookups/day (no card)", "Unlimited with Web plan", "Financials + director network", "No API key needed"],
+    features: ["Everything in Free", "500 API calls / month", "50 calls / day limit", "Unlimited web browsing on registrum.co.uk"],
   },
   {
     name: "Pro",
     price: "£49",
     period: "per month",
-    calls: "2,000 calls / month",
+    calls: "4,000 calls / month",
     burst: "100 / min",
     highlight: true,
     cta: "Get started",
     ctaHref: null,
     plan: "pro" as "pro",
-    features: ["Everything in Free", "40× the quota", "Batch enrichment (500 companies/job)", "PSC ownership chain resolution", "SLA uptime commitment"],
+    features: ["Everything in Web", "4,000 API calls / month", "PSC chain & UBO traversal", "ECCTA compliance endpoint", "SLA uptime commitment"],
   },
   {
     name: "Enterprise",
     price: "£149",
     period: "per month",
-    calls: "10,000 calls / month",
+    calls: "Unlimited calls",
     burst: "500 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
     plan: null as null,
-    features: ["Everything in Pro", "5× the quota", "Batch enrichment (500 companies/job)", "PSC ownership chain resolution", "Dedicated support"],
+    features: ["Everything in Pro", "Unlimited API calls", "Dedicated support", "Custom rate limits on request"],
   },
 ];
 
@@ -635,8 +689,6 @@ function Pricing() {
             No setup fees. No hidden costs. Upgrade or cancel any time.
           </p>
         </div>
-
-        <BetaCoupon />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
@@ -666,7 +718,7 @@ function Pricing() {
                 <div className="mt-3 text-sm font-medium text-[#E8F0FE]">
                   {plan.calls}
                 </div>
-                <div className="text-xs text-[#3D5275]">{plan.name === "Web" ? plan.burst : `Burst: ${plan.burst}`}</div>
+                <div className="text-xs text-[#3D5275]">{`Burst: ${plan.burst}`}</div>
               </div>
 
               <ul className="mb-6 flex flex-col gap-2.5">
@@ -706,6 +758,8 @@ function Pricing() {
             </div>
           ))}
         </div>
+
+        <FeatureMatrix />
       </div>
     </section>
   );
@@ -817,7 +871,7 @@ function CtaBand() {
           Get your free API key
         </h2>
         <p className="mt-4 text-[#7A8FAD]">
-          50 free calls per month. Your key arrives in your inbox in seconds.
+          5 free lookups per day. Your key arrives in your inbox in seconds.
           No credit card required.
         </p>
         <KeySignupForm />

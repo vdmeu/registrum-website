@@ -57,6 +57,7 @@ export default function DirectorsExample() {
             </Link>
             <span>/</span>
             <span>Director network example</span>
+            <span className="rounded-full border border-[#4F7BFF]/20 bg-[#4F7BFF]/10 px-2 py-0.5 text-[#4F7BFF]">Demo data</span>
           </div>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>

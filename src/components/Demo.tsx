@@ -101,9 +101,9 @@ function CtaOverlay({ onDismiss }: { onDismiss: () => void }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
           </svg>
         </div>
-        <h3 className="text-base font-semibold text-white">Enjoying the demo?</h3>
+        <h3 className="text-base font-semibold text-white">Want real data?</h3>
         <p className="mt-2 text-sm text-[#7A8FAD]">
-          Get a free API key and query any UK company — 50 calls per month, no credit card.
+          This is demo data. Sign up for a free API key to query any UK company — 5 real lookups/day, no credit card.
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <a
@@ -117,7 +117,7 @@ function CtaOverlay({ onDismiss }: { onDismiss: () => void }) {
             onClick={onDismiss}
             className="text-xs text-[#3D5275] transition-colors hover:text-[#7A8FAD]"
           >
-            Continue exploring
+            Continue exploring demo
           </button>
         </div>
       </div>
@@ -188,9 +188,9 @@ export default function Demo() {
       } else {
         const data = await res.json();
         setSelected(data.data);
-        // Increment lookup count and show CTA after 3rd company detail view
+        // Show CTA after first company detail view
         lookupCount.current += 1;
-        if (lookupCount.current === 3) {
+        if (lookupCount.current === 1) {
           setShowCta(true);
         }
       }
@@ -241,9 +241,10 @@ export default function Demo() {
       </div>
 
       {isMock && searched && (
-        <p className="mt-2 text-center text-xs text-[#3D5275]">
-          Showing sample data — live results available with an API key
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#7A8FAD]">
+          <span className="rounded-full border border-[#4F7BFF]/20 bg-[#4F7BFF]/10 px-2 py-0.5 text-[#4F7BFF]">Demo data</span>
+          <span className="text-[#3D5275]">Sign up for a free key to query any real UK company</span>
+        </div>
       )}
 
       {/* Search error */}

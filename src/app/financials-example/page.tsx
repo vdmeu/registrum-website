@@ -397,7 +397,7 @@ export default function FinancialsExamplePage() {
         <div className="mb-10">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F7BFF]/20 bg-[#4F7BFF]/10 px-3 py-1 text-xs font-medium text-[#4F7BFF]">
-              Real data — live from Companies House
+              Demo data — representative iXBRL extract
             </span>
             <span className="text-xs text-[#3D5275]">
               Codeweavers Limited · Company 04092394 · Year ended 31 Dec 2024 · Accounts type: <strong className="text-[#7A8FAD]">full iXBRL</strong>

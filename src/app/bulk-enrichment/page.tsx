@@ -45,8 +45,13 @@ export default function BulkEnrichment() {
       {/* Hero */}
       <section className="px-6 pb-16 pt-20">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1.5 text-xs font-medium text-[#4F7BFF]">
-            Async Batch API
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#4F7BFF]/30 bg-[#4F7BFF]/10 px-3 py-1.5 text-xs font-medium text-[#4F7BFF]">
+              Async Batch API
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#22D3A0]/30 bg-[#22D3A0]/10 px-3 py-1.5 text-xs font-medium text-[#22D3A0]">
+              Available on all plans
+            </div>
           </div>
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Enrich 500 companies<br />with one API call
@@ -282,8 +287,8 @@ for number, error in job["errors"].items():
             Start enriching in minutes
           </h2>
           <p className="mt-3 text-[#7A8FAD]">
-            Free tier includes 50 calls/month — enough to test the batch endpoint end-to-end.
-            Pro and Enterprise plans unlock higher quotas for production workloads.
+            Batch enrichment is available on all plans — quota-limited by your monthly allowance.
+            Free gives 5 lookups/day. Web gives 500/month. Pro gives 4,000/month for production workloads.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

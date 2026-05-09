@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const API_BASE = "https://api.registrum.co.uk";
-const DEMO_KEY = process.env.REGISTRUM_DEMO_API_KEY;
-
-// Shown when no REGISTRUM_DEMO_API_KEY is set in Vercel env vars
 export const MOCK_SEARCH = {
   status: "success",
   data: {
@@ -86,43 +82,13 @@ export const MOCK_DIRECTORS = {
   _mock: true,
 };
 
+// Demo always returns mock data — sign up for a free key to query any real company.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q");
-  const company = searchParams.get("company");
   const directors = searchParams.get("directors");
-  const financials = searchParams.get("financials");
+  const company = searchParams.get("company");
 
-  if (!DEMO_KEY) {
-    // No key configured — return mock data so the demo still works
-    return NextResponse.json(
-      directors ? MOCK_DIRECTORS : company ? MOCK_COMPANY : MOCK_SEARCH
-    );
-  }
-
-  try {
-    const headers = { "X-API-Key": DEMO_KEY };
-
-    if (directors) {
-      const url = `${API_BASE}/v1/company/${directors}/directors`;
-      const res = await fetch(url, { headers, cache: "no-store" });
-      return NextResponse.json(await res.json(), { status: res.status });
-    }
-
-    if (financials) {
-      const url = `${API_BASE}/v1/company/${financials}/financials`;
-      const res = await fetch(url, { headers, cache: "no-store" });
-      return NextResponse.json(await res.json(), { status: res.status });
-    }
-
-    const url = company
-      ? `${API_BASE}/v1/company/${company}`
-      : `${API_BASE}/v1/search?q=${encodeURIComponent(q ?? "")}&items_per_page=5`;
-
-    const res = await fetch(url, { headers, cache: "no-store" });
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
-  } catch {
-    return NextResponse.json({ status: "error", detail: "Demo unavailable" }, { status: 502 });
-  }
+  return NextResponse.json(
+    directors ? MOCK_DIRECTORS : company ? MOCK_COMPANY : MOCK_SEARCH
+  );
 }
