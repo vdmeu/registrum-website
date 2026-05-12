@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "API Status · Registrum",
@@ -13,16 +14,7 @@ const STATUS_PAGE_URL = "https://api.registrum.co.uk/v1/health";
 export default function Status() {
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)] flex flex-col">
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <Link href="/#get-key" className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]">
-            Get API Key
-          </Link>
-        </div>
-      </header>
+      <SiteNav maxWidth="6xl" />
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-6 flex items-center gap-2 rounded-full border border-[#22D3A0]/30 bg-[#22D3A0]/10 px-4 py-2">

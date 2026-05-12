@@ -34,14 +34,24 @@ export default function KeySignupForm() {
 
   if (status === "success") {
     return (
-      <div className="mt-8 flex flex-col items-center gap-2">
+      <div className="mt-8 flex flex-col items-center gap-3">
         <div className="flex items-center gap-2 rounded-full border border-[#22D3A0]/30 bg-[#22D3A0]/10 px-4 py-2.5 text-sm font-medium text-[#22D3A0]">
           <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
             <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
           </svg>
-          Check your inbox — your key is on its way.
+          Account created — check your inbox for your API key.
         </div>
-        <p className="text-xs text-[#3D5275]">Check spam if it doesn&apos;t arrive within 2 minutes.</p>
+        <p className="text-xs text-[#3D5275]">
+          Your email is your login. Use it at{" "}
+          <a href="/dashboard" className="text-[#4F7BFF] hover:underline">registrum.co.uk/dashboard</a>{" "}
+          to manage your key and look up companies.
+        </p>
+        <a
+          href="/search"
+          className="mt-1 rounded-md border border-white/10 px-5 py-2 text-sm font-medium text-[#E8F0FE] transition-colors hover:border-white/20 hover:bg-white/5"
+        >
+          While you wait — search live company data →
+        </a>
       </div>
     );
   }
@@ -65,7 +75,7 @@ export default function KeySignupForm() {
           disabled={status === "loading"}
           className="rounded-md bg-[#4F7BFF] px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF] disabled:opacity-60"
         >
-          {status === "loading" ? "Sending..." : "Send my key →"}
+          {status === "loading" ? "Creating account..." : "Create free account →"}
         </button>
       </form>
       {status === "error" && (

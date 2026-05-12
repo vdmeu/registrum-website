@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageFeedback from "@/app/components/PageFeedback";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Use Cases — Registrum",
@@ -63,19 +64,7 @@ export default function UseCasesPage() {
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <a
-            href="/#get-key"
-            className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-          >
-            Get API Key
-          </a>
-        </div>
-      </header>
+      <SiteNav maxWidth="6xl" />
 
       {/* Hero */}
       <section className="px-6 pb-16 pt-20 text-center">

@@ -95,10 +95,10 @@ export async function POST(request: NextRequest) {
 }
 
 function buildEmailHtml(key: string, isResend: boolean): string {
-  const headline = isResend ? "Your API key is already active" : "Your API key is ready";
+  const headline = isResend ? "Your Registrum account is already active" : "Your Registrum account is ready";
   const introLine = isResend
-    ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">You already have an active Registrum API key. Here&apos;s the prefix as a reminder &mdash; if you&apos;ve lost the full key, reply to this email and we&apos;ll sort it out.</p>`
-    : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">Here&apos;s your Registrum API key. Keep it safe &mdash; we won&apos;t show it again.</p>`;
+    ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">You already have an active Registrum account. Here&apos;s your API key prefix as a reminder &mdash; if you&apos;ve lost the full key, you can rotate it from your dashboard or reply to this email.</p>`
+    : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">Your account is set up. Your email address is your login &mdash; use it at your dashboard to look up companies in your browser or manage your API key. Keep the key below safe; we won&apos;t show it again.</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">

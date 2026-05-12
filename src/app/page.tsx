@@ -1,85 +1,23 @@
 import type { ReactNode } from "react";
 import KeySignupForm from "@/components/KeySignupForm";
-import Demo from "@/components/Demo";
 import Link from "next/link";
 import CheckoutButton from "@/components/CheckoutButton";
 import HeroCodeBlock from "@/components/HeroCodeBlock";
 import CodeBlock from "@/components/CodeBlock";
+import SiteNav from "@/components/SiteNav";
 
 export default function Home() {
   return (
     <div className="overflow-x-hidden bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
-      <Nav />
+      <SiteNav />
       <Hero />
-      <DemoSection />
+      <SearchSection />
       <Features />
-      <EnrichmentTeaser />
       <HowItWorks />
-      <StarterKits />
       <Pricing />
       <CtaBand />
       <Footer />
     </div>
-  );
-}
-
-/* ─── Nav ─────────────────────────────────────────────────────────────────── */
-
-function Nav() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <span className="text-lg font-semibold tracking-tight text-white">
-          Registrum
-        </span>
-        <nav className="flex items-center gap-4 sm:gap-6">
-          <a
-            href="#demo"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Company Search
-          </a>
-          <Link
-            href="/quickstart"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Quickstart
-          </Link>
-          <a
-            href="https://api.registrum.co.uk/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Docs
-          </a>
-          <Link
-            href="/eccta-verification"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            ECCTA
-          </Link>
-          <a
-            href="#pricing"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Pricing
-          </a>
-          <Link
-            href="/dashboard"
-            className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-          >
-            Dashboard
-          </Link>
-          <a
-            href="#get-key"
-            className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-          >
-            Get API Key
-          </a>
-        </nav>
-      </div>
-    </header>
   );
 }
 
@@ -127,7 +65,7 @@ function Hero() {
                 href="#get-key"
                 className="rounded-md bg-[#4F7BFF] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
               >
-                Get free API key →
+                Create free account →
               </a>
               <a
                 href="https://api.registrum.co.uk/docs"
@@ -166,21 +104,40 @@ function Hero() {
   );
 }
 
-/* ─── Demo ────────────────────────────────────────────────────────────────── */
+/* ─── Search ──────────────────────────────────────────────────────────────── */
 
-function DemoSection() {
+function SearchSection() {
   return (
     <section id="demo" className="border-y border-white/[0.06] bg-white/[0.02] px-6 py-24">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Try it now
-          </h2>
-          <p className="mt-4 text-[#7A8FAD]">
-            Search from our demo companies below. Sign up for a free key to query any UK company — 5 real lookups/day.
-          </p>
-        </div>
-        <Demo />
+      <div className="mx-auto max-w-3xl text-center">
+        <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          Search any UK company
+        </h2>
+        <p className="mt-4 text-[#7A8FAD]">
+          Sign up free to search live UK company data — financials, directors, and ownership.
+        </p>
+        <form action="/search" method="get" className="mt-8">
+          <div className="flex gap-2">
+            <input
+              name="q"
+              type="text"
+              placeholder='Try "Tesco", "Monzo", or a company number'
+              className="flex-1 rounded-xl border border-white/10 bg-white/[0.06] px-5 py-3.5 text-sm text-white placeholder-[#3D5275] outline-none transition-colors focus:border-[#4F7BFF]/50 focus:bg-white/[0.08]"
+            />
+            <button
+              type="submit"
+              className="rounded-xl bg-[#4F7BFF] px-5 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+        <p className="mt-4 text-xs text-[#3D5275]">
+          Free API key required — sign up below in seconds ·{" "}
+          <a href="#get-key" className="text-[#4F7BFF] hover:underline">
+            Get your free key
+          </a>
+        </p>
       </div>
     </section>
   );
@@ -207,10 +164,10 @@ const features: Feature[] = [
     ),
     title: "Structured Financials",
     description:
-      "iXBRL filings parsed into clean JSON — turnover, net assets, profit/loss, employees. Current and prior year. All values in actual GBP. Explicit data_quality metadata explains exactly what's available and why.",
+      "iXBRL filings parsed into clean JSON — turnover, net assets, profit/loss, employees. Current and prior year, all values in actual GBP. Explicit data_quality metadata so you know exactly what's available.",
     tag: "7-day cache",
     link: "/financials-example",
-    linkLabel: "See live data example →",
+    linkLabel: "Try with any company →",
   },
   {
     icon: (
@@ -220,23 +177,10 @@ const features: Feature[] = [
     ),
     title: "Director Networks",
     description:
-      "One endpoint traverses the full board network to 2 degrees. Returns all companies sharing directors, sorted by connection strength. Discover related entities that aren't obvious from a single filing.",
+      "One endpoint traverses the full board network to 2 degrees. Returns all companies sharing directors, sorted by connection strength. Discover related entities not obvious from a single filing.",
     tag: "24h cache",
     link: "/directors-example",
-    linkLabel: "See Tesco network →",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-      </svg>
-    ),
-    title: "ECCTA Identity Verification",
-    description:
-      "Monitor director and PSC verification compliance under the Economic Crime and Corporate Transparency Act 2023. One API call returns a risk rating, verified count, and list of unverified persons - sourced directly from Companies House.",
-    tag: "Pro/Enterprise",
-    link: "/eccta-verification",
-    linkLabel: "ECCTA compliance demo →",
+    linkLabel: "Try with any company →",
   },
   {
     icon: (
@@ -246,64 +190,23 @@ const features: Feature[] = [
     ),
     title: "Beneficial Ownership (PSC)",
     description:
-      "The PSC register decoded and made traversable. Natures of control translated to plain English ('Owns 75-100% of shares'). Active/ceased PSCs split automatically. Corporate entity PSCs include their company number — pass it to the chain endpoint to find the ultimate beneficial owner.",
+      "The PSC register decoded and traversable. Natures of control in plain English. Corporate PSCs include their company number — pass it to the chain endpoint to find the ultimate beneficial owner.",
     tag: "24h cache",
     link: "/psc-example",
-    linkLabel: "See ownership chain example →",
+    linkLabel: "Try with any company →",
   },
   {
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
       </svg>
     ),
-    title: "Intelligent Caching",
+    title: "ECCTA Compliance",
     description:
-      "24h company profiles, 7-day financials. Stale-while-revalidate during CH outages — you get data even when Companies House is down. Never hit the 600-request rate limit again.",
-    tag: "Circuit breaker",
-    link: "/caching",
-    linkLabel: "How it works →",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-      </svg>
-    ),
-    title: "Fuzzy Company Search",
-    description:
-      "Name-to-number matching with optional enriched profiles on results. Pass enrich=true to return full company profiles in a single call — no second round-trip required.",
-    tag: "1h cache",
-    link: "https://api.registrum.co.uk/docs#/Search/search_companies_v1_search_get",
-    linkLabel: "Search API docs →",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-      </svg>
-    ),
-    title: "Agent-ready Markdown output",
-    description:
-      "Every response includes a summary_md field — pre-formatted GitHub Markdown ready to drop into an LLM prompt or agent context. No parsing, no post-processing.",
-    tag: "summary_md",
-    codeBlock: `## Codeweavers Limited\n**Net profit**: £4.6M (+94% YoY)\n**Net assets**: £9.2M\n**Employees**: 142`,
-    link: "/financials-example",
-    linkLabel: "See example output →",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
-      </svg>
-    ),
-    title: "Use inside Claude and Cursor",
-    description:
-      "Install the MCP server once and your AI agent can look up any UK company directly. Works with Claude Desktop, Cursor, and any MCP-compatible client.",
-    tag: "MCP server",
-    codeBlock: `{\n  "mcpServers": {\n    "registrum": {\n      "command": "npx",\n      "args": ["-y", "@registrum/mcp"]\n    }\n  }\n}`,
-    link: "/quickstart#mcp",
-    linkLabel: "Setup guide →",
+      "Monitor director and PSC identity verification under the Economic Crime and Corporate Transparency Act 2023. One call returns a risk rating, verified count, and list of unverified persons.",
+    tag: "Pro/Enterprise",
+    link: "/eccta-verification",
+    linkLabel: "See live demo →",
   },
   {
     icon: (
@@ -313,7 +216,7 @@ const features: Feature[] = [
     ),
     title: "Async Batch Enrichment",
     description:
-      "Submit up to 500 company numbers in one POST. We enrich them in the background, automatically managing the CH API rate limit. Poll for results — no timeouts, no rate-limit errors, no queuing logic on your side.",
+      "Submit 500 company numbers in one POST. We enrich them in the background, automatically managing the CH rate limit. Poll for results — no timeouts, no queuing logic on your side.",
     tag: "500 companies/batch",
     codeBlock: `POST /v1/batch\n{"company_numbers": ["00445790", ...]}\n\n→ {"batch_id": "3fa85f64-...", "status": "queued"}`,
     link: "/bulk-enrichment",
@@ -327,14 +230,14 @@ function Features() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-16 text-center">
           <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Built for developers and AI agents
+            Everything Companies House doesn&apos;t give you
           </h2>
           <p className="mt-4 text-[#7A8FAD]">
-            Clean JSON for your app. Agent-ready Markdown for your LLM pipeline. MCP tools for Claude and Cursor. No Companies House API key required.
+            Structured financials parsed from iXBRL. Director networks. Beneficial ownership chains. ECCTA compliance. All in clean JSON — no CH API key needed.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {features.map((f) => (
             <div
               key={f.title}
@@ -868,11 +771,11 @@ function CtaBand() {
     >
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Get your free API key
+          Create your free account
         </h2>
         <p className="mt-4 text-[#7A8FAD]">
-          5 free lookups per day. Your key arrives in your inbox in seconds.
-          No credit card required.
+          Your email is your login. You get an API key for code integrations and a dashboard
+          to look up companies in your browser. No credit card required.
         </p>
         <KeySignupForm />
         <p className="mt-4 text-xs text-[#3D5275]">
@@ -882,6 +785,14 @@ function CtaBand() {
           </a>
           .
         </p>
+        <div className="mt-6 border-t border-white/[0.06] pt-6">
+          <p className="text-sm text-[#7A8FAD]">
+            Already have an account?{" "}
+            <Link href="/dashboard" className="text-[#4F7BFF] hover:underline">
+              Sign in to your dashboard →
+            </Link>
+          </p>
+        </div>
       </div>
     </section>
   );

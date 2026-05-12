@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import DirectorGraph from "@/components/DirectorGraph";
 import { TESCO_DIRECTORS, TESCO_NETWORK_STATS } from "@/lib/tescoDirectors";
+import LiveLookup from "@/components/LiveLookup";
+import PageFeedback from "@/app/components/PageFeedback";
+import SiteNav from "@/components/SiteNav";
+import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 
 export const metadata: Metadata = {
   title: "Director Network Example · TESCO PLC · Registrum",
@@ -20,33 +25,15 @@ const directors = TESCO_DIRECTORS.map((d) => ({
   })),
 }));
 
-export default function DirectorsExample() {
+export default async function DirectorsExample() {
+  const cookieStore = await cookies();
+  const sessionValue = cookieStore.get(SESSION_COOKIE)?.value;
+  const isAuthenticated = Boolean(sessionValue && verifySessionCookie(sessionValue));
+
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <nav className="flex items-center gap-6">
-            <a
-              href="https://api.registrum.co.uk/docs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-            >
-              Docs
-            </a>
-            <Link
-              href="/#get-key"
-              className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-            >
-              Get API Key
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav maxWidth="7xl" />
 
       {/* Company header */}
       <section className="border-b border-white/[0.06] px-6 py-10">
@@ -99,9 +86,21 @@ export default function DirectorsExample() {
         </div>
       </section>
 
+      {/* Live lookup */}
+      <section className="border-b border-white/[0.06] px-6 py-10">
+        <div className="mx-auto max-w-7xl">
+          <LiveLookup feature="directors" label="live director network for any UK company" isAuthenticated={isAuthenticated} />
+        </div>
+      </section>
+
       {/* Graph — full-width */}
       <section className="border-b border-white/[0.06] bg-white/[0.015] px-6 py-12">
         <div className="mx-auto max-w-7xl">
+          <div className="mb-5 flex items-center gap-2 rounded-lg border border-[#F97316]/20 bg-[#F97316]/5 px-4 py-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />
+            <span className="text-xs font-medium text-[#F97316]">Example data below</span>
+            <span className="text-xs text-[#7A8FAD]">— TESCO PLC real data, shown to illustrate the API response. Use the widget above to try any company with your free API key.</span>
+          </div>
           <div className="mb-6 flex flex-wrap items-center gap-4 text-xs text-[#3D5275]">
             <span className="font-medium text-[#7A8FAD]">Legend</span>
             <span className="flex items-center gap-1.5">
@@ -194,6 +193,7 @@ export default function DirectorsExample() {
           </div>
         </div>
       </section>
+      <PageFeedback pageUrl="/directors-example" />
     </div>
   );
 }

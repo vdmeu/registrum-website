@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { exampleFinancials, fmtGbp, fmtEmployees } from "@/lib/exampleFinancials";
+import LiveLookup from "@/components/LiveLookup";
+import PageFeedback from "@/app/components/PageFeedback";
+import SiteNav from "@/components/SiteNav";
+import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 
 export const metadata: Metadata = {
   title: "Financial Data Example — Registrum API",
@@ -367,30 +372,16 @@ function LegendItem({ color, label }: { color: string; label: string }) {
 
 /* ─── Page ────────────────────────────────────────────────────────────────── */
 
-export default function FinancialsExamplePage() {
+export default async function FinancialsExamplePage() {
+  const cookieStore = await cookies();
+  const sessionValue = cookieStore.get(SESSION_COOKIE)?.value;
+  const isAuthenticated = Boolean(sessionValue && verifySessionCookie(sessionValue));
   const dq = exampleFinancials.data_quality;
 
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/quickstart" className="text-sm text-[#7A8FAD] transition-colors hover:text-white">
-              Quickstart
-            </Link>
-            <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="text-sm text-[#7A8FAD] transition-colors hover:text-white">
-              Docs
-            </a>
-            <Link href="/#get-key" className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]">
-              Get API Key
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav maxWidth="6xl" />
 
       <main className="mx-auto max-w-6xl px-6 pb-32 pt-16">
         {/* Header */}
@@ -415,8 +406,19 @@ export default function FinancialsExamplePage() {
             full balance sheet, employee headcount — all in actual GBP integers, with prior-year comparatives.
           </p>
 
+          <div className="mt-6">
+            <LiveLookup feature="financials" label="live financials for any UK company" isAuthenticated={isAuthenticated} />
+          </div>
+
+          {/* Example data notice */}
+          <div className="mt-8 flex items-center gap-2 rounded-lg border border-[#F97316]/20 bg-[#F97316]/5 px-4 py-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />
+            <span className="text-xs font-medium text-[#F97316]">Example data below</span>
+            <span className="text-xs text-[#7A8FAD]">— Codeweavers Ltd, real filing, shown to illustrate the API response. Use the widget above to try any company with your free API key.</span>
+          </div>
+
           {/* Key metrics strip */}
-          <div className="mt-8 grid grid-cols-2 gap-px border border-white/[0.06] bg-white/[0.06] sm:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-px border border-white/[0.06] bg-white/[0.06] sm:grid-cols-4">
             {[
               { label: "Net profit", value: "£4.6M", sub: "FY2024 (+94% YoY)" },
               { label: "Net assets", value: "£9.2M", sub: "balance sheet (+99% YoY)" },
@@ -501,6 +503,7 @@ export default function FinancialsExamplePage() {
             </Link>
           </div>
         </div>
+      <PageFeedback pageUrl="/financials-example" />
       </main>
     </div>
   );

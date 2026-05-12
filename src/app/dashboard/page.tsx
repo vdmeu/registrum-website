@@ -4,6 +4,8 @@ import Link from "next/link";
 import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 import { getSupabase } from "@/lib/supabase";
 import DashboardClient from "./DashboardClient";
+import DashboardLookup from "./DashboardLookup";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Dashboard · Registrum",
@@ -65,13 +67,7 @@ export default async function DashboardPage({
 
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
-          <Link href="/" className="text-sm font-semibold text-white">Registrum</Link>
-          <span className="text-xs text-[#3D5275]">{email}</span>
-        </div>
-      </header>
+      <SiteNav maxWidth="3xl" />
 
       <main className="mx-auto max-w-3xl px-6 py-10 space-y-6">
         <div>
@@ -121,6 +117,15 @@ export default async function DashboardPage({
           )}
         </div>
 
+        {/* Live lookup panel */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#0A1628] p-6">
+          <div className="text-sm font-medium text-[#7A8FAD] mb-1">Look up a company</div>
+          <p className="text-xs text-[#3D5275] mb-4">
+            Search live UK company data directly in your browser. Your API key gives you the same data programmatically.
+          </p>
+          <DashboardLookup />
+        </div>
+
         {/* API key card */}
         <div className="rounded-xl border border-white/[0.08] bg-[#0A1628] p-6">
           <div className="text-sm font-medium text-[#7A8FAD] mb-4">API key</div>
@@ -153,16 +158,12 @@ function LoginPage({ error }: { error?: string }) {
 
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)] flex flex-col">
-      <header className="border-b border-white/[0.06]">
-        <div className="mx-auto max-w-3xl px-6 py-4">
-          <Link href="/" className="text-sm font-semibold text-white">Registrum</Link>
-        </div>
-      </header>
+      <SiteNav maxWidth="3xl" />
       <main className="flex flex-1 items-center justify-center px-6">
         <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold text-white mb-2">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-white mb-2">Your account</h1>
           <p className="text-sm text-[#7A8FAD] mb-6">
-            Enter the email address associated with your API key. We'll send you a one-click login link.
+            Enter the email you signed up with. We'll send a one-click login link — no password needed.
           </p>
           {errorMsg && (
             <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -181,11 +182,7 @@ function LoginPage({ error }: { error?: string }) {
 function NoKeyPage({ email }: { email: string }) {
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)] flex flex-col">
-      <header className="border-b border-white/[0.06]">
-        <div className="mx-auto max-w-3xl px-6 py-4">
-          <Link href="/" className="text-sm font-semibold text-white">Registrum</Link>
-        </div>
-      </header>
+      <SiteNav maxWidth="3xl" />
       <main className="flex flex-1 items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
           <h1 className="text-xl font-semibold text-white mb-2">No active key found</h1>

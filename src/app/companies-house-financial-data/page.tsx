@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import KeySignupForm from "@/components/KeySignupForm";
 import PageFeedback from "@/app/components/PageFeedback";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Companies House Financial Data API — Structured JSON | Registrum",
@@ -10,47 +11,7 @@ export const metadata: Metadata = {
 
 function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href="/" className="text-lg font-semibold tracking-tight text-white hover:text-[#E8F0FE]">
-          Registrum
-        </a>
-        <nav className="flex items-center gap-6">
-          <a
-            href="/#demo"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
-          >
-            Company Search
-          </a>
-          <a
-            href="/quickstart"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
-          >
-            Quickstart
-          </a>
-          <a
-            href="https://api.registrum.co.uk/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
-          >
-            Docs
-          </a>
-          <a
-            href="/#pricing"
-            className="text-sm text-[#7A8FAD] transition-colors hover:text-white"
-          >
-            Pricing
-          </a>
-          <a
-            href="/#get-key"
-            className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-          >
-            Get API Key
-          </a>
-        </nav>
-      </div>
-    </header>
+    <SiteNav maxWidth="6xl" />
   );
 }
 

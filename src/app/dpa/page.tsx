@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "Data Processing Agreement · Registrum",
@@ -11,21 +12,7 @@ const EFFECTIVE_DATE = "1 March 2026";
 export default function Dpa() {
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <nav className="flex items-center gap-6">
-            <a href="https://api.registrum.co.uk/docs" target="_blank" rel="noopener noreferrer" className="text-sm text-[#7A8FAD] transition-colors hover:text-white">
-              Docs
-            </a>
-            <Link href="/#get-key" className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]">
-              Get API Key
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav maxWidth="6xl" />
 
       <main className="mx-auto max-w-2xl px-6 py-20">
         <div className="mb-12">

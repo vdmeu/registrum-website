@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import LiveLookup from "@/components/LiveLookup";
+import PageFeedback from "@/app/components/PageFeedback";
+import SiteNav from "@/components/SiteNav";
+import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 
 export const metadata: Metadata = {
   title: "Beneficial Ownership (PSC) Example · Registrum",
@@ -119,34 +124,15 @@ const CHAIN = {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function PscExample() {
+export default async function PscExample() {
+  const cookieStore = await cookies();
+  const sessionValue = cookieStore.get(SESSION_COOKIE)?.value;
+  const isAuthenticated = Boolean(sessionValue && verifySessionCookie(sessionValue));
   const uboCount = 3; // George + Priya + James
   return (
     <div className="min-h-screen bg-[#060D1B] text-[#E8F0FE] font-[family-name:var(--font-geist-sans)]">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
-            Registrum
-          </Link>
-          <nav className="flex items-center gap-6">
-            <a
-              href="https://api.registrum.co.uk/docs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block"
-            >
-              Docs
-            </a>
-            <Link
-              href="/#get-key"
-              className="rounded-md bg-[#4F7BFF] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-            >
-              Get API Key
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav maxWidth="7xl" />
 
       {/* Company header */}
       <section className="border-b border-white/[0.06] px-6 py-10">
@@ -155,6 +141,7 @@ export default function PscExample() {
             <Link href="/" className="hover:text-white">← Back</Link>
             <span>/</span>
             <span>PSC &amp; beneficial ownership example</span>
+            <span className="rounded-full border border-[#F97316]/20 bg-[#F97316]/10 px-2 py-0.5 font-medium text-[#F97316]">Example data</span>
           </div>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -205,9 +192,21 @@ export default function PscExample() {
         </div>
       </section>
 
+      {/* Live lookup */}
+      <section className="border-b border-white/[0.06] px-6 py-10">
+        <div className="mx-auto max-w-7xl">
+          <LiveLookup feature="psc" label="see any company's PSC register live" isAuthenticated={isAuthenticated} />
+        </div>
+      </section>
+
       {/* Ownership chain */}
       <section className="border-b border-white/[0.06] bg-white/[0.015] px-6 py-14">
         <div className="mx-auto max-w-7xl">
+          <div className="mb-5 flex items-center gap-2 rounded-lg border border-[#F97316]/20 bg-[#F97316]/5 px-4 py-2.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />
+            <span className="text-xs font-medium text-[#F97316]">Example data below</span>
+            <span className="text-xs text-[#7A8FAD]">— illustrative ownership structure, not a real company. Use the widget above to try any company with your free API key.</span>
+          </div>
           <div className="mb-2 flex items-center gap-3">
             <h2 className="text-xl font-semibold text-white">Ownership chain</h2>
             <span className="rounded-full border border-[#22D3A0]/20 bg-[#22D3A0]/10 px-2.5 py-0.5 text-xs text-[#22D3A0]">
@@ -503,6 +502,7 @@ function ChainTree() {
           </span>
         </div>
       </div>
+      <PageFeedback pageUrl="/psc-example" />
     </div>
   );
 }

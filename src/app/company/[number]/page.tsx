@@ -1,11 +1,12 @@
 import { cookies, headers } from "next/headers";
-import { createHash, randomBytes } from "crypto";
+import { createHash } from "crypto";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import DirectorGraph from "@/components/DirectorGraph";
 import { getSupabase } from "@/lib/supabase";
+import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 
-const SITE_URL = "https://registrum.co.uk";
+const API_URL = "https://api.registrum.co.uk/v1";
 const FREE_DAILY_LIMIT = 10;
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -61,6 +62,13 @@ interface Director {
   other_appointments: Array<{ company_number: string; company_name: string; role: string }>;
 }
 
+interface Psc {
+  name: string;
+  kind: string;
+  natures_of_control_plain?: string[];
+  ceased_on?: string;
+}
+
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function fmt(n?: number): string {
@@ -86,9 +94,13 @@ function fmtYear(d?: string): string {
   return d.slice(0, 4);
 }
 
-async function fetchViaDemo(path: string): Promise<Response> {
-  const url = `${SITE_URL}/api/demo?${path}`;
-  return fetch(url, { cache: "no-store" });
+async function fetchReal(endpoint: string): Promise<Response> {
+  const apiKey = process.env.REGISTRUM_DEMO_API_KEY;
+  if (!apiKey) throw new Error("REGISTRUM_DEMO_API_KEY not set");
+  return fetch(`${API_URL}/${endpoint}`, {
+    headers: { "X-API-Key": apiKey },
+    cache: "no-store",
+  });
 }
 
 /* ─── Rate limit check ───────────────────────────────────────────────────── */
@@ -145,6 +157,10 @@ export default async function CompanyPage({
 
   const rid = cookieStore.get("rid")?.value ?? "anon";
   const wsid = cookieStore.get("wsid")?.value ?? null;
+  const sessionEmail = (() => {
+    const sv = cookieStore.get(SESSION_COOKIE)?.value;
+    return sv ? verifySessionCookie(sv) : null;
+  })();
   const ip =
     headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     headerStore.get("x-real-ip") ??
@@ -167,21 +183,23 @@ export default async function CompanyPage({
   }
 
   // Fetch company profile (always — needed for hero even when paywalled)
-  const profileRes = await fetchViaDemo(`company=${number}`);
+  const profileRes = await fetchReal(`company/${number}`);
   if (!profileRes.ok) return notFound();
   const profileJson = await profileRes.json();
   const company: CompanyProfile | null = profileJson.data ?? null;
   if (!company) return notFound();
 
-  // Fetch financials + directors only when allowed
+  // Fetch financials + directors + PSC only when allowed
   let financials: Financials | null = null;
   let financialsError: string | null = null;
   let directors: Director[] = [];
+  let pscs: Psc[] = [];
 
   if (!paywalled) {
-    const [finRes, dirRes] = await Promise.all([
-      fetchViaDemo(`financials=${number}`),
-      fetchViaDemo(`directors=${number}`),
+    const [finRes, dirRes, pscRes] = await Promise.all([
+      fetchReal(`company/${number}/financials`),
+      fetchReal(`company/${number}/directors`),
+      fetchReal(`company/${number}/psc`),
     ]);
     if (finRes.ok) {
       const finJson = await finRes.json();
@@ -197,6 +215,12 @@ export default async function CompanyPage({
     if (dirRes.ok) {
       const dirJson = await dirRes.json();
       directors = dirJson.data?.current_directors ?? [];
+    }
+    if (pscRes.ok) {
+      const pscJson = await pscRes.json();
+      pscs = (pscJson.data?.active_pscs ?? pscJson.data?.pscs ?? []).filter(
+        (p: Psc) => !p.ceased_on
+      );
     }
   }
 
@@ -214,7 +238,7 @@ export default async function CompanyPage({
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#060D1B]/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-4">
-            <Link href="/#demo" className="text-sm text-[#7A8FAD] hover:text-white transition-colors">
+            <Link href="/search" className="text-sm text-[#7A8FAD] hover:text-white transition-colors">
               ← Search
             </Link>
             <span className="text-white/20">|</span>
@@ -222,12 +246,21 @@ export default async function CompanyPage({
               Registrum
             </Link>
           </div>
-          <a
-            href="/#get-key"
-            className="rounded-md bg-[#4F7BFF] px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
-          >
-            Get API Key
-          </a>
+          {sessionEmail ? (
+            <Link
+              href="/dashboard"
+              className="rounded-md border border-white/10 px-4 py-1.5 text-sm font-medium text-[#E8F0FE] transition-colors hover:border-white/20 hover:bg-white/5"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <a
+              href="/#get-key"
+              className="rounded-md bg-[#4F7BFF] px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
+            >
+              Get started free
+            </a>
+          )}
         </div>
       </header>
 
@@ -313,17 +346,23 @@ export default async function CompanyPage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
                 <p className="text-sm font-medium text-white">
-                  {"You've used your 10 free lookups today."}
+                  {"You've used your 10 free company lookups today."}
                 </p>
                 <p className="mt-1 text-sm text-[#7A8FAD]">
-                  Get unlimited company lookups for £9/mo.
+                  Create a free account — resets daily, no credit card.
                 </p>
-                <CheckoutButtonClient
-                  plan="web"
-                  className="mt-4 rounded-md bg-[#4F7BFF] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
+                <a
+                  href="/#get-key"
+                  className="mt-4 inline-block rounded-md bg-[#4F7BFF] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
                 >
-                  Unlock for £9/mo →
-                </CheckoutButtonClient>
+                  Create free account →
+                </a>
+                <div className="mt-3 text-xs text-[#3D5275]">
+                  Or unlock unlimited browsing from{" "}
+                  <CheckoutButtonClient plan="web" className="text-[#4F7BFF] hover:underline">
+                    £19/mo
+                  </CheckoutButtonClient>
+                </div>
               </div>
             </div>
 
@@ -427,6 +466,28 @@ export default async function CompanyPage({
                 </div>
               )}
             </div>
+
+            {/* PSC / Beneficial Ownership */}
+            {pscs.length > 0 && (
+              <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
+                <div className="mb-4 text-sm font-medium text-[#7A8FAD]">Persons with Significant Control</div>
+                <div className="flex flex-col gap-3">
+                  {pscs.map((p) => (
+                    <div key={p.name} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-white">{p.name}</p>
+                        <span className="shrink-0 rounded-full border border-white/[0.06] px-2 py-0.5 text-xs text-[#3D5275]">
+                          {p.kind}
+                        </span>
+                      </div>
+                      {(p.natures_of_control_plain ?? []).map((n) => (
+                        <p key={n} className="mt-1 text-xs text-[#7A8FAD]">{n}</p>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -435,12 +496,21 @@ export default async function CompanyPage({
           <p className="text-sm text-[#7A8FAD]">
             Access this data programmatically via the Registrum API.
           </p>
-          <a
-            href="/#get-key"
-            className="mt-3 inline-block text-sm font-medium text-[#4F7BFF] hover:underline"
-          >
-            Get a free API key →
-          </a>
+          {sessionEmail ? (
+            <Link
+              href="/dashboard"
+              className="mt-3 inline-block text-sm font-medium text-[#4F7BFF] hover:underline"
+            >
+              View your dashboard →
+            </Link>
+          ) : (
+            <a
+              href="/#get-key"
+              className="mt-3 inline-block text-sm font-medium text-[#4F7BFF] hover:underline"
+            >
+              Create a free account →
+            </a>
+          )}
         </div>
       </main>
     </div>
