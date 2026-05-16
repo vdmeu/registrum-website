@@ -3,6 +3,9 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
+import { createMagicToken } from "@/lib/dashboard-auth";
+
+const SITE_URL = "https://registrum.co.uk";
 
 const KEY_PREFIX_LENGTH = 14; // "reg_live_" (9) + 5 hex chars
 
@@ -48,11 +51,12 @@ export async function POST(request: NextRequest) {
 
   if (existing && existing.length > 0) {
     // Already has a key — resend a reminder email rather than provisioning a new one
+    const verifyUrl = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(createMagicToken(email))}`;
     await getResend().emails.send({
       from: "Registrum <api@registrum.co.uk>",
       to: email,
       subject: "Your Registrum API key (already active)",
-      html: buildEmailHtml(existing[0].key_prefix + "…", true),
+      html: buildEmailHtml(existing[0].key_prefix + "…", true, verifyUrl),
     });
     return NextResponse.json({ ok: true, message: "Key already exists — check your inbox." });
   }
@@ -79,11 +83,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Send key delivery email
+  const verifyUrl = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(createMagicToken(email))}`;
   const { error: emailError } = await getResend().emails.send({
     from: "Registrum <api@registrum.co.uk>",
     to: email,
     subject: "Your Registrum API key",
-    html: buildEmailHtml(fullKey, false),
+    html: buildEmailHtml(fullKey, false, verifyUrl),
   });
 
   if (emailError) {
@@ -94,7 +99,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-function buildEmailHtml(key: string, isResend: boolean): string {
+function buildEmailHtml(key: string, isResend: boolean, verifyUrl: string): string {
   const headline = isResend ? "Your Registrum account is already active" : "Your Registrum account is ready";
   const introLine = isResend
     ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">You already have an active Registrum account. Here&apos;s your API key prefix as a reminder &mdash; if you&apos;ve lost the full key, you can rotate it from your dashboard or reply to this email.</p>`
@@ -135,7 +140,7 @@ function buildEmailHtml(key: string, isResend: boolean): string {
                   <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
                 </td>
                 <td>
-                  <a href="https://registrum.co.uk/dashboard" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">View usage</a>
+                  <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
                 </td>
               </tr>
             </table>

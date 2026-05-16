@@ -13,7 +13,7 @@
 import { createHmac } from "crypto";
 
 const SECRET = process.env.DASHBOARD_SECRET ?? "";
-const TOKEN_TTL_SECONDS = 60 * 60; // magic link valid for 1 hour
+const TOKEN_TTL_SECONDS = 60 * 60 * 24; // magic link valid for 24 hours
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // session cookie valid for 7 days
 
 export const SESSION_COOKIE = "dash_session";

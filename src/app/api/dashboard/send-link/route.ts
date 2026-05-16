@@ -32,14 +32,19 @@ export async function POST(request: NextRequest) {
   }
 
   const token = createMagicToken(email);
-  const link = `${SITE_URL}/dashboard/verify?token=${encodeURIComponent(token)}`;
+  const link = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(token)}`;
 
-  await getResend().emails.send({
+  const { error: sendError } = await getResend().emails.send({
     from: "Registrum <api@registrum.co.uk>",
     to: email,
     subject: "Your Registrum dashboard link",
     html: buildEmailHtml(link),
   });
+
+  if (sendError) {
+    console.error("Resend send-link error:", sendError);
+    return NextResponse.json({ error: "Failed to send login link. Please try again." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
@@ -58,7 +63,7 @@ function buildEmailHtml(link: string): string {
         <tr><td style="padding:28px 36px 32px">
           <h1 style="margin:0 0 12px;font-size:20px;font-weight:600;color:#fff">Access your dashboard</h1>
           <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#7A8FAD">
-            Click the button below to open your dashboard. This link expires in 1 hour and can only be used once.
+            Click the button below to open your dashboard. This link expires in 24 hours and can only be used once.
           </p>
           <a href="${link}" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:11px 24px;border-radius:6px;font-size:14px;font-weight:500">
             Open my dashboard →

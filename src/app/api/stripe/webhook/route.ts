@@ -5,6 +5,9 @@ import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
+import { createMagicToken } from "@/lib/dashboard-auth";
+
+const SITE_URL = "https://registrum.co.uk";
 
 const KEY_PREFIX_LENGTH = 14;
 
@@ -72,14 +75,15 @@ export async function POST(req: NextRequest) {
           break;
         }
 
+        const verifyUrl = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(createMagicToken(email))}`;
         const emailSubject =
           plan === "web"
             ? "Your Registrum Web subscription is active"
             : "Your Registrum Pro API key";
         const emailHtml =
           plan === "web"
-            ? buildWebEmail(email)
-            : buildProKeyEmail(fullKey);
+            ? buildWebEmail(email, verifyUrl)
+            : buildProKeyEmail(fullKey, verifyUrl);
 
         const { error: emailError } = await getResend().emails.send({
           from: "Registrum <api@registrum.co.uk>",
@@ -137,7 +141,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-function buildWebEmail(email: string): string {
+function buildWebEmail(email: string, verifyUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,7 +167,16 @@ function buildWebEmail(email: string): string {
             <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#7A8FAD">
               After your first lookup, a session cookie is set automatically &mdash; no login required. Lookups are unlimited for 35 days per session.
             </p>
-            <a href="https://registrum.co.uk" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Start looking up companies</a>
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:0 12px 0 0">
+                  <a href="https://registrum.co.uk" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Start looking up companies</a>
+                </td>
+                <td>
+                  <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -181,7 +194,7 @@ function buildWebEmail(email: string): string {
 </html>`;
 }
 
-function buildProKeyEmail(key: string): string {
+function buildProKeyEmail(key: string, verifyUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -213,8 +226,11 @@ function buildProKeyEmail(key: string): string {
                 <td style="padding:0 12px 0 0">
                   <a href="https://registrum.co.uk/quickstart" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Quickstart guide</a>
                 </td>
-                <td>
+                <td style="padding:0 12px">
                   <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
+                </td>
+                <td>
+                  <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
                 </td>
               </tr>
             </table>
