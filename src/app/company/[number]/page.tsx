@@ -1,13 +1,15 @@
-import { cookies, headers } from "next/headers";
-import { createHash } from "crypto";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import DirectorGraph from "@/components/DirectorGraph";
+import CompanySignInForm from "@/components/CompanySignInForm";
 import { getSupabase } from "@/lib/supabase";
 import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
+import { tescoFinancials } from "@/lib/tescoFinancials";
+import { TESCO_DIRECTORS } from "@/lib/tescoDirectors";
+import { DEMO_PSC } from "@/lib/demoPSC";
 
 const API_URL = "https://api.registrum.co.uk/v1";
-const FREE_DAILY_LIMIT = 10;
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
 
@@ -69,6 +71,18 @@ interface Psc {
   ceased_on?: string;
 }
 
+interface ApiKeyRecord {
+  plan: string;
+  calls_this_month: number;
+}
+
+const PLAN_QUOTAS: Record<string, number> = {
+  free: 50,
+  web: 500,
+  pro: 2000,
+  enterprise: Infinity,
+};
+
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function fmt(n?: number): string {
@@ -103,27 +117,6 @@ async function fetchReal(endpoint: string): Promise<Response> {
   });
 }
 
-/* ─── Rate limit check ───────────────────────────────────────────────────── */
-
-async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; count: number }> {
-  const today = new Date().toISOString().slice(0, 10);
-  const supabase = getSupabase();
-
-  const { data, error } = await supabase.rpc("increment_web_lookup", {
-    p_identifier: identifier,
-    p_date: today,
-  });
-
-  if (error) {
-    console.error("increment_web_lookup error", error);
-    // Fail open — don't block users on DB errors
-    return { allowed: true, count: 0 };
-  }
-
-  const count = data as number;
-  return { allowed: count <= FREE_DAILY_LIMIT, count };
-}
-
 async function checkWebSession(token: string): Promise<boolean> {
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -140,6 +133,16 @@ async function checkWebSession(token: string): Promise<boolean> {
   return !!data;
 }
 
+/* ─── Demo badge ─────────────────────────────────────────────────────────── */
+
+function DemoBadge() {
+  return (
+    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
+      Demo data
+    </span>
+  );
+}
+
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 
 export default async function CompanyPage({
@@ -149,78 +152,91 @@ export default async function CompanyPage({
 }) {
   const { number } = await params;
 
-  // Validate company number format
   if (!/^\d{7,8}$/.test(number)) return notFound();
 
   const cookieStore = await cookies();
-  const headerStore = await headers();
 
-  const rid = cookieStore.get("rid")?.value ?? "anon";
   const wsid = cookieStore.get("wsid")?.value ?? null;
   const sessionEmail = (() => {
     const sv = cookieStore.get(SESSION_COOKIE)?.value;
     return sv ? verifySessionCookie(sv) : null;
   })();
-  const ip =
-    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headerStore.get("x-real-ip") ??
-    "unknown";
 
-  // Check paid session first
+  // Paid web session bypass (£19/mo plan)
   let isUnlimited = false;
   if (wsid) {
     isUnlimited = await checkWebSession(wsid);
   }
 
-  // Rate limit check for anonymous users
+  // Anonymous = no session and not on a paid web session
+  const isAnonymous = !sessionEmail && !isUnlimited;
+
+  // For authenticated users, check monthly quota
   let paywalled = false;
-  if (!isUnlimited) {
-    const identifier = createHash("sha256")
-      .update(`${ip}:${rid}`)
-      .digest("hex");
-    const { allowed } = await checkRateLimit(identifier);
-    paywalled = !allowed;
+  let userRecord: ApiKeyRecord | null = null;
+
+  if (!isAnonymous && !isUnlimited && sessionEmail) {
+    const { data } = await getSupabase()
+      .from("api_keys")
+      .select("plan, calls_this_month")
+      .eq("label", sessionEmail)
+      .eq("is_active", true)
+      .maybeSingle();
+    userRecord = data ?? null;
+    if (userRecord) {
+      const quota = PLAN_QUOTAS[userRecord.plan] ?? 50;
+      paywalled = userRecord.calls_this_month >= quota;
+    }
   }
 
-  // Fetch company profile (always — needed for hero even when paywalled)
+  // Fetch company profile — always needed for the hero
   const profileRes = await fetchReal(`company/${number}`);
   if (!profileRes.ok) return notFound();
   const profileJson = await profileRes.json();
   const company: CompanyProfile | null = profileJson.data ?? null;
   if (!company) return notFound();
 
-  // Fetch financials + directors + PSC only when allowed
+  // Always fetch financials and PSC so anonymous users see accurate availability info
   let financials: Financials | null = null;
   let financialsError: string | null = null;
   let directors: Director[] = [];
   let pscs: Psc[] = [];
 
-  if (!paywalled) {
-    const [finRes, dirRes, pscRes] = await Promise.all([
-      fetchReal(`company/${number}/financials`),
-      fetchReal(`company/${number}/directors`),
-      fetchReal(`company/${number}/psc`),
-    ]);
-    if (finRes.ok) {
+  const [finRes, pscRes] = await Promise.all([
+    fetchReal(`company/${number}/financials`),
+    fetchReal(`company/${number}/psc`),
+  ]);
+  if (finRes.ok) {
+    const finJson = await finRes.json();
+    financials = finJson.data ?? null;
+  } else {
+    try {
       const finJson = await finRes.json();
-      financials = finJson.data ?? null;
-    } else {
-      try {
-        const finJson = await finRes.json();
-        financialsError = finJson.detail ?? null;
-      } catch {
-        financialsError = null;
-      }
+      financialsError = finJson.detail ?? null;
+    } catch {
+      financialsError = null;
     }
+  }
+  if (pscRes.ok) {
+    const pscJson = await pscRes.json();
+    pscs = (pscJson.data?.active_pscs ?? pscJson.data?.pscs ?? []).filter(
+      (p: Psc) => !p.ceased_on
+    );
+  }
+
+  if (!isAnonymous && !paywalled) {
+    const dirRes = await fetchReal(`company/${number}/directors`);
     if (dirRes.ok) {
       const dirJson = await dirRes.json();
       directors = dirJson.data?.current_directors ?? [];
     }
-    if (pscRes.ok) {
-      const pscJson = await pscRes.json();
-      pscs = (pscJson.data?.active_pscs ?? pscJson.data?.pscs ?? []).filter(
-        (p: Psc) => !p.ceased_on
-      );
+
+    // Count one page view against the logged-in user's monthly quota
+    if (userRecord && sessionEmail) {
+      await getSupabase()
+        .from("api_keys")
+        .update({ calls_this_month: userRecord.calls_this_month + 1 })
+        .eq("label", sessionEmail);
     }
   }
 
@@ -323,50 +339,173 @@ export default async function CompanyPage({
           ))}
         </div>
 
-        {paywalled ? (
-          /* ─── Paywall ─────────────────────────────────────────────────── */
+        {isAnonymous ? (
+          /* ─── Anonymous: demo data + sign-in CTA ─────────────────────── */
           <>
-            {/* Blurred financials stub */}
+            {/* Sign-in banner */}
+            <div className="mb-6 rounded-xl border border-[#4F7BFF]/20 bg-[#4F7BFF]/5 px-6 py-5">
+              <p className="mb-1 text-sm font-medium text-white">
+                Sign in to see live data for {company.company_name}
+              </p>
+              <p className="mb-4 text-sm text-[#7A8FAD]">
+                The sections below show example data. Enter your email for a direct link — no password needed.
+                Free account includes 50 lookups/month.
+              </p>
+              <CompanySignInForm
+                companyName={company.company_name}
+                companyNumber={number}
+              />
+            </div>
+
+            {/* Demo financials */}
+            <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm font-medium text-[#7A8FAD]">Financials</div>
+                {!financialsError && <DemoBadge />}
+              </div>
+              {financialsError ? (
+                <p className="text-sm text-[#3D5275]">
+                  {financialsError.includes("image-based PDF")
+                    ? "Accounts filed as image-based PDF — structured data not available."
+                    : financialsError.includes("No parseable")
+                      ? "No digital accounts filing found for this company."
+                      : "Financial data not available."}
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div>
+                    <div className="text-xs text-[#3D5275]">Turnover</div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      {fmt(tescoFinancials.profit_and_loss.turnover?.current ?? undefined)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#3D5275]">Net Assets</div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      {fmt(tescoFinancials.balance_sheet.net_assets?.current ?? undefined)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#3D5275]">Employees</div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      {fmtNum(tescoFinancials.other.employees?.current ?? undefined)}
+                    </div>
+                  </div>
+                  <div className="col-span-2 sm:col-span-3">
+                    <span className="rounded border border-white/[0.06] px-2 py-0.5 text-xs text-[#3D5275]">
+                      Example: {tescoFinancials.company_name} · Period end {tescoFinancials.period_end}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Demo director network */}
+            <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm font-medium text-[#7A8FAD]">Director Network</div>
+                <DemoBadge />
+              </div>
+              <DirectorGraph
+                focalName={tescoFinancials.company_name}
+                directors={TESCO_DIRECTORS.map((d) => ({
+                  name: d.name,
+                  role: d.role,
+                  other_appointments: d.other_appointments,
+                }))}
+              />
+              <div className="mt-6 border-t border-white/[0.06] pt-4">
+                <div className="text-xs text-[#3D5275] mb-3">
+                  Example directors (showing {tescoFinancials.company_name})
+                </div>
+                <div className="flex flex-col gap-2">
+                  {TESCO_DIRECTORS.slice(0, 4).map((d) => (
+                    <div
+                      key={d.name}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5"
+                    >
+                      <span className="text-sm font-medium text-white">{d.name}</span>
+                      <span className="text-xs text-[#7A8FAD]">{d.role}</span>
+                      {d.other_appointments.length > 0 && (
+                        <span className="text-xs text-[#3D5275]">
+                          · {d.other_appointments.length} other co.
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {TESCO_DIRECTORS.length > 4 && (
+                    <p className="text-xs text-[#3D5275]">
+                      + {TESCO_DIRECTORS.length - 4} more directors in the full view
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* PSC — real data for accurate availability, demo example if non-empty */}
+            <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="text-sm font-medium text-[#7A8FAD]">Persons with Significant Control</div>
+                {pscs.length > 0 && <DemoBadge />}
+              </div>
+              {pscs.length > 0 ? (
+                <>
+                  <div className="flex flex-col gap-3">
+                    {DEMO_PSC.map((p) => (
+                      <div key={p.name} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-white">{p.name}</p>
+                          <span className="shrink-0 rounded-full border border-white/[0.06] px-2 py-0.5 text-xs text-[#3D5275]">
+                            {p.kind}
+                          </span>
+                        </div>
+                        {p.natures_of_control_plain.map((n) => (
+                          <p key={n} className="mt-1 text-xs text-[#7A8FAD]">{n}</p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs text-[#3D5275]">Example data — sign in above to view {company.company_name}&apos;s actual PSC.</p>
+                </>
+              ) : (
+                <p className="text-sm text-[#3D5275]">No PSC recorded for this company.</p>
+              )}
+            </div>
+          </>
+        ) : paywalled ? (
+          /* ─── Quota exceeded ──────────────────────────────────────────── */
+          <>
             <div className="relative mb-6 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
-              {/* Blurred content behind */}
               <div className="blur-sm select-none pointer-events-none px-6 py-5">
                 <div className="mb-4 text-sm font-medium text-[#7A8FAD]">Financials</div>
                 <div className="grid grid-cols-3 gap-4">
                   {["Turnover", "Net Assets", "Employees"].map((l) => (
                     <div key={l}>
                       <div className="text-xs text-[#3D5275]">{l}</div>
-                      <div className="mt-1 text-lg font-semibold text-white">£‒‒.‒bn</div>
+                      <div className="mt-1 text-lg font-semibold text-white">£--.-bn</div>
                     </div>
                   ))}
                 </div>
               </div>
-              {/* Lock overlay */}
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#060D1B]/70 px-6 text-center backdrop-blur-[2px]">
                 <svg className="mb-3 h-6 w-6 text-[#3D5275]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
                 <p className="text-sm font-medium text-white">
-                  {"You've used your 10 free company lookups today."}
+                  Monthly limit reached on your {userRecord?.plan} plan.
                 </p>
                 <p className="mt-1 text-sm text-[#7A8FAD]">
-                  Create a free account — resets daily, no credit card.
+                  Upgrade to continue accessing full company data.
                 </p>
                 <a
-                  href="/#get-key"
+                  href="/#pricing"
                   className="mt-4 inline-block rounded-md bg-[#4F7BFF] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
                 >
-                  Create free account →
+                  View plans →
                 </a>
-                <div className="mt-3 text-xs text-[#3D5275]">
-                  Or unlock unlimited browsing from{" "}
-                  <CheckoutButtonClient plan="web" className="text-[#4F7BFF] hover:underline">
-                    £19/mo
-                  </CheckoutButtonClient>
-                </div>
               </div>
             </div>
 
-            {/* Blurred director network stub */}
             <div className="relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0A1628]">
               <div className="blur-sm select-none pointer-events-none px-6 py-5">
                 <div className="mb-4 text-sm font-medium text-[#7A8FAD]">Director Network</div>
@@ -380,7 +519,7 @@ export default async function CompanyPage({
             </div>
           </>
         ) : (
-          /* ─── Full data ───────────────────────────────────────────────── */
+          /* ─── Full authenticated data ─────────────────────────────────── */
           <>
             {/* Financials */}
             <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
@@ -468,9 +607,9 @@ export default async function CompanyPage({
             </div>
 
             {/* PSC / Beneficial Ownership */}
-            {pscs.length > 0 && (
-              <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
-                <div className="mb-4 text-sm font-medium text-[#7A8FAD]">Persons with Significant Control</div>
+            <div className="mb-6 rounded-xl border border-white/[0.08] bg-[#0A1628] px-6 py-5">
+              <div className="mb-4 text-sm font-medium text-[#7A8FAD]">Persons with Significant Control</div>
+              {pscs.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {pscs.map((p) => (
                     <div key={p.name} className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3">
@@ -486,8 +625,10 @@ export default async function CompanyPage({
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-[#3D5275]">No PSC recorded for this company.</p>
+              )}
+            </div>
           </>
         )}
 
@@ -514,25 +655,5 @@ export default async function CompanyPage({
         </div>
       </main>
     </div>
-  );
-}
-
-/* ─── Client component wrapper for CheckoutButton ───────────────────────── */
-
-import CheckoutButton from "@/components/CheckoutButton";
-
-function CheckoutButtonClient({
-  plan,
-  className,
-  children,
-}: {
-  plan: "web" | "pro";
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <CheckoutButton plan={plan} className={className}>
-      {children}
-    </CheckoutButton>
   );
 }
