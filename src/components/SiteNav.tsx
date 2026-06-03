@@ -28,6 +28,9 @@ export default async function SiteNav({ maxWidth = "6xl" }: Props) {
           <Link href="/search" className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block">
             Search
           </Link>
+          <Link href="/report" className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block">
+            Reports
+          </Link>
           <a href="/#pricing" className="hidden text-sm text-[#7A8FAD] transition-colors hover:text-white sm:block">
             Pricing
           </a>

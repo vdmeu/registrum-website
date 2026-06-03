@@ -46,12 +46,20 @@ export default function KeySignupForm() {
           <a href="/dashboard" className="text-[#4F7BFF] hover:underline">registrum.co.uk/dashboard</a>{" "}
           to manage your key and look up companies.
         </p>
-        <a
-          href="/search"
-          className="mt-1 rounded-md border border-white/10 px-5 py-2 text-sm font-medium text-[#E8F0FE] transition-colors hover:border-white/20 hover:bg-white/5"
-        >
-          While you wait — search live company data →
-        </a>
+        <div className="mt-1 flex flex-col items-center gap-2 sm:flex-row">
+          <a
+            href="/quickstart"
+            className="rounded-md bg-[#4F7BFF] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6B93FF]"
+          >
+            Make your first API call →
+          </a>
+          <a
+            href="/search"
+            className="rounded-md border border-white/10 px-5 py-2 text-sm font-medium text-[#E8F0FE] transition-colors hover:border-white/20 hover:bg-white/5"
+          >
+            While you wait — search live company data →
+          </a>
+        </div>
       </div>
     );
   }

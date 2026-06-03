@@ -9,6 +9,25 @@ import { createMagicToken } from "@/lib/dashboard-auth";
 
 const SITE_URL = "https://registrum.co.uk";
 
+async function notifyNewSubscriber(email: string, plan: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  const text =
+    `💳 *New paying subscriber*\n` +
+    `Email: \`${email}\`\n` +
+    `Plan: ${plan} (£${plan === "pro" ? "49" : "9"}/month)`;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
+    });
+  } catch {
+    console.error("telegram alert failed");
+  }
+}
+
 const KEY_PREFIX_LENGTH = 14;
 
 function generateKey(): { fullKey: string; prefix: string; keyHash: string } {
@@ -95,6 +114,8 @@ export async function POST(req: NextRequest) {
         if (emailError) {
           console.error("resend email error", emailError);
         }
+
+        await notifyNewSubscriber(email, plan);
         break;
       }
 

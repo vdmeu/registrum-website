@@ -29,6 +29,12 @@ export default function SearchPage() {
           <SearchClient />
         </Suspense>
 
+        <p className="mt-4 text-center text-xs text-[#3D5275]">
+          10 free company lookups per day without an account.{" "}
+          <a href="/#get-key" className="text-[#4F7BFF] hover:underline">Create a free account</a>
+          {" "}for 50 API calls/month via the API.
+        </p>
+
         <div className="mt-10 rounded-xl border border-white/[0.06] bg-white/[0.02] px-6 py-5 text-center">
           <p className="text-sm font-medium text-white">No account yet?</p>
           <p className="mt-1 text-sm text-[#7A8FAD]">

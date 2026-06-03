@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { getSupabase } from "@/lib/supabase";
+import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
+
+const PLAN_QUOTAS: Record<string, number> = {
+  free: 50,
+  web: 500,
+  pro: 2000,
+  enterprise: Infinity,
+};
 
 const API_URL = "https://api.registrum.co.uk/v1";
 const FREE_DAILY_LIMIT = 10;
@@ -48,21 +56,49 @@ export async function GET(req: NextRequest) {
   else if (psc)        { endpoint = `company/${psc}/psc`;               feature = "psc"; }
   else return NextResponse.json({ error: "Missing param" }, { status: 400 });
 
-  // Rate limit per IP per feature
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
+  // Resolve authenticated session
+  const sessionCookieValue = req.cookies.get(SESSION_COOKIE)?.value;
+  const sessionEmail = sessionCookieValue ? verifySessionCookie(sessionCookieValue) : null;
 
-  const { allowed } = await checkLimit(ip, feature);
-  if (!allowed) {
-    return NextResponse.json(
-      {
-        error: "RATE_LIMITED",
-        message: `You've used your 10 free ${feature} lookups today. Sign up for a free API key to continue.`,
-      },
-      { status: 429 }
-    );
+  let userRecord: { plan: string; calls_this_month: number } | null = null;
+  if (sessionEmail) {
+    const { data } = await getSupabase()
+      .from("api_keys")
+      .select("plan, calls_this_month")
+      .eq("label", sessionEmail)
+      .eq("is_active", true)
+      .maybeSingle();
+    userRecord = data ?? null;
+  }
+
+  if (userRecord) {
+    // Logged-in: check monthly plan quota
+    const quota = PLAN_QUOTAS[userRecord.plan] ?? 50;
+    if (userRecord.calls_this_month >= quota) {
+      return NextResponse.json(
+        {
+          error: "QUOTA_EXCEEDED",
+          message: `Monthly limit reached on your ${userRecord.plan} plan. Upgrade to continue.`,
+        },
+        { status: 429 }
+      );
+    }
+  } else {
+    // Anonymous: IP rate limit per feature
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    const { allowed } = await checkLimit(ip, feature);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: `You've used your 10 free ${feature} lookups today. Sign up for a free API key to continue.`,
+        },
+        { status: 429 }
+      );
+    }
   }
 
   const res = await fetch(`${API_URL}/${endpoint}`, {
@@ -70,5 +106,14 @@ export async function GET(req: NextRequest) {
     cache: "no-store",
   });
   const data = await res.json();
+
+  // Increment logged-in user's monthly quota after a successful fetch
+  if (res.ok && userRecord && sessionEmail) {
+    await getSupabase()
+      .from("api_keys")
+      .update({ calls_this_month: userRecord.calls_this_month + 1 })
+      .eq("label", sessionEmail);
+  }
+
   return NextResponse.json(data, { status: res.ok ? 200 : res.status });
 }
