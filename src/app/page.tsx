@@ -571,7 +571,7 @@ const plans = [
     price: "£149",
     period: "per month",
     calls: "Unlimited calls",
-    burst: "500 / min",
+    burst: "200 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
