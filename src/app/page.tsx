@@ -570,13 +570,13 @@ const plans = [
     name: "Enterprise",
     price: "£149",
     period: "per month",
-    calls: "Unlimited calls",
-    burst: "200 / min",
+    calls: "From 10,000 / month",
+    burst: "150 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
     plan: null as null,
-    features: ["Everything in Pro", "Unlimited API calls", "Dedicated support", "Custom rate limits on request"],
+    features: ["Everything in Pro", "From 10,000 calls / month", "Dedicated support", "Custom volume on request"],
   },
 ];
 
