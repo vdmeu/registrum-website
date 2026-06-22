@@ -83,6 +83,64 @@ export async function POST(req: NextRequest) {
         }
 
         const plan = (session.metadata?.plan ?? "pro") as "pro" | "web";
+
+        // An email may already have an active key (e.g. signed up free via
+        // /api/register before subscribing). Upgrade that row in place rather
+        // than inserting a second one — otherwise the account ends up split
+        // across two api_keys rows under the same email, with usage history
+        // stuck on the old row and the new row showing zero activity.
+        const { data: existingKey } = await getSupabase()
+          .from("api_keys")
+          .select("id, key_prefix")
+          .eq("label", email)
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+
+        const verifyUrl = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(createMagicToken(email))}`;
+        const firstName = firstNameFromEmail(email);
+
+        if (existingKey) {
+          const { error: updateError } = await getSupabase()
+            .from("api_keys")
+            .update({
+              plan,
+              stripe_customer_id: session.customer as string | null,
+              stripe_subscription_id: session.subscription as string | null,
+            })
+            .eq("id", existingKey.id);
+
+          if (updateError) {
+            console.error("api_keys update error", updateError);
+            break;
+          }
+
+          const emailSubject =
+            plan === "web"
+              ? "Your Registrum Web subscription is active"
+              : firstName
+              ? `Your Registrum Pro plan is active, ${firstName}`
+              : "Your Registrum Pro plan is active";
+          const emailHtml =
+            plan === "web"
+              ? buildWebEmail(email, verifyUrl, firstName)
+              : buildProUpgradeEmail(existingKey.key_prefix, verifyUrl, firstName);
+
+          const { error: emailError } = await getResend().emails.send({
+            from: "Registrum <api@registrum.co.uk>",
+            to: email,
+            subject: emailSubject,
+            html: emailHtml,
+          });
+
+          if (emailError) {
+            console.error("resend email error", emailError);
+          }
+
+          await notifyNewSubscriber(email, plan);
+          break;
+        }
+
         const { fullKey, prefix, keyHash } = generateKey();
 
         const { error: insertError } = await getSupabase().from("api_keys").insert({
@@ -102,8 +160,6 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        const verifyUrl = `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(createMagicToken(email))}`;
-        const firstName = firstNameFromEmail(email);
         const emailSubject =
           plan === "web"
             ? "Your Registrum Web subscription is active"
@@ -207,6 +263,57 @@ function buildWebEmail(email: string, verifyUrl: string, firstName: string): str
                 </td>
                 <td>
                   <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
+            <p style="margin:0;font-size:12px;color:#3D5275;line-height:1.6">
+              Questions? Reply to this email or contact <a href="mailto:support@registrum.co.uk" style="color:#4F7BFF">support@registrum.co.uk</a><br>
+              Eugene Merwe-Chartier trading as Registrum &middot; Data sourced under the Open Government Licence v3.0
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildProUpgradeEmail(keyPrefix: string, verifyUrl: string, firstName: string): string {
+  const greeting = firstName ? `Hi ${firstName}, you&apos;re on Pro` : "You&apos;re on Pro";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Your Registrum Pro plan is active</title>
+</head>
+<body style="margin:0;padding:0;background:#060D1B;font-family:system-ui,sans-serif;color:#E8F0FE">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060D1B;padding:40px 20px">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#0A1628;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:100%">
+        <tr>
+          <td style="padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <span style="font-size:18px;font-weight:600;color:#fff">Registrum</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px">
+            <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#fff">${greeting}</h1>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">
+              Your existing API key (<code style="color:#E8F0FE">${keyPrefix}&hellip;</code>) has been upgraded to the Pro plan &mdash; no need to change anything in your integration. New limits: 2,000 calls/month, 400 calls/day, director network up to depth=2.
+            </p>
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:0 12px 0 0">
+                  <a href="${verifyUrl}" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Open your dashboard</a>
+                </td>
+                <td>
+                  <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
                 </td>
               </tr>
             </table>

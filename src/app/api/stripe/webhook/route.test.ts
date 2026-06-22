@@ -19,6 +19,11 @@ const mockEq = vi.fn();
 const mockUpdate = vi.fn();
 const mockDeleteEq = vi.fn();
 const mockSessionDelete = vi.fn();
+const mockSelect = vi.fn();
+const mockSelectEq1 = vi.fn();
+const mockSelectEq2 = vi.fn();
+const mockLimit = vi.fn();
+const mockMaybeSingle = vi.fn();
 
 vi.mock("@/lib/supabase", () => ({
   getSupabase: () => ({
@@ -27,6 +32,7 @@ vi.mock("@/lib/supabase", () => ({
         return {
           insert: mockInsert,
           update: mockUpdate,
+          select: mockSelect,
         };
       }
       if (table === "web_sessions") {
@@ -106,6 +112,12 @@ describe("POST /api/stripe/webhook", () => {
     mockSessionDelete.mockReturnValue({ eq: mockDeleteEq });
     mockDeleteEq.mockResolvedValue({ error: null });
     mockEmailSend.mockResolvedValue({ data: {}, error: null });
+    // Default: no existing key for this email (takes the insert path)
+    mockSelect.mockReturnValue({ eq: mockSelectEq1 });
+    mockSelectEq1.mockReturnValue({ eq: mockSelectEq2 });
+    mockSelectEq2.mockReturnValue({ limit: mockLimit });
+    mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle });
+    mockMaybeSingle.mockResolvedValue({ data: null });
   });
 
   // ── Signature verification ─────────────────────────────────────────────────
@@ -169,6 +181,48 @@ describe("POST /api/stripe/webhook", () => {
     expect(emailArg.to).toBe("web@example.com");
     expect(emailArg.subject).toContain("Web");
     expect(emailArg.html).not.toContain("reg_live_");
+  });
+
+  // ── checkout.session.completed — existing key for this email ──────────────
+
+  it("checkout.session.completed: upgrades the existing active key in place instead of inserting a duplicate", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith({
+      plan: "pro",
+      stripe_customer_id: "cus_test_abc",
+      stripe_subscription_id: "sub_test_xyz",
+    });
+    expect(mockEq).toHaveBeenCalledWith("id", "existing-key-id");
+  });
+
+  it("checkout.session.completed: existing key upgrade sends a plan-upgraded email, not a new key", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    await POST(makeReq("{}"));
+    expect(mockEmailSend).toHaveBeenCalledOnce();
+    const emailArg = mockEmailSend.mock.calls[0][0];
+    expect(emailArg.subject).toContain("Pro");
+    expect(emailArg.html).toContain("reg_live_abcde");
+    expect(emailArg.html).not.toMatch(/reg_live_[0-9a-f]{27}/);
+  });
+
+  it("checkout.session.completed: returns 200 even when the existing-key update fails", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    mockEq.mockResolvedValue({ error: { message: "DB error" } });
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockEmailSend).not.toHaveBeenCalled();
   });
 
   // ── checkout.session.completed — edge cases ────────────────────────────────
