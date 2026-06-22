@@ -225,6 +225,21 @@ describe("POST /api/stripe/webhook", () => {
     expect(mockEmailSend).not.toHaveBeenCalled();
   });
 
+  it("checkout.session.completed: matches an existing key even when Stripe's email casing differs", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro", "Buyer@Example.com"));
+    await POST(makeReq("{}"));
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockSelectEq1).toHaveBeenCalledWith("label", "buyer@example.com");
+    expect(mockUpdate).toHaveBeenCalledWith({
+      plan: "pro",
+      stripe_customer_id: "cus_test_abc",
+      stripe_subscription_id: "sub_test_xyz",
+    });
+  });
+
   // ── checkout.session.completed — edge cases ────────────────────────────────
 
   it("checkout.session.completed: handles missing email without crashing", async () => {

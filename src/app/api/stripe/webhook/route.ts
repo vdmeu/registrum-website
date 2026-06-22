@@ -76,7 +76,12 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const email = session.customer_details?.email;
+        // Normalize to match the label written by /api/register and
+        // /api/company-access — otherwise a casing mismatch (e.g. Stripe
+        // reports "John@example.com" but the free key was stored as
+        // "john@example.com") defeats the dedup lookup below and the
+        // duplicate-row bug resurfaces.
+        const email = session.customer_details?.email?.trim().toLowerCase();
         if (!email) {
           console.error("checkout.session.completed missing email", session.id);
           break;
