@@ -310,7 +310,7 @@ function buildProUpgradeEmail(keyPrefix: string, verifyUrl: string, firstName: s
           <td style="padding:32px 40px">
             <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#fff">${greeting}</h1>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">
-              Your existing API key (<code style="color:#E8F0FE">${keyPrefix}&hellip;</code>) has been upgraded to the Pro plan &mdash; no need to change anything in your integration. New limits: 2,000 calls/month, 400 calls/day, director network up to depth=2.
+              Your existing API key (<code style="color:#E8F0FE">${keyPrefix}&hellip;</code>) has been upgraded to the Pro plan &mdash; no need to change anything in your integration. New limits: 4,000 calls/month, 400 calls/day, director network up to depth=2.
             </p>
             <table cellpadding="0" cellspacing="0">
               <tr>

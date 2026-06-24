@@ -176,7 +176,7 @@ def get_network(company_number, ch_api_key):
     return network`;
 
 const REG_NETWORK_CODE = `# Python — director network with Registrum
-# One call. Cached 24h. Rate-limit safe.
+# One call. Cached 30d. Rate-limit safe.
 
 import requests
 
@@ -425,7 +425,7 @@ export default function VsCompaniesHousePage() {
             <p className="mb-5 text-sm text-[#7A8FAD]">
               The director network endpoint collapses ~16 paginated CH API calls into one. Each of
               those raw calls counts toward your 600 req/5min limit — and produces no caching. With
-              Registrum the result is cached for 24h and shared across all your requests.
+              Registrum the result is cached for 30 days and shared across all your requests.
             </p>
             <CodeComparison />
           </section>

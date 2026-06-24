@@ -79,7 +79,7 @@ interface ApiKeyRecord {
 const PLAN_QUOTAS: Record<string, number> = {
   free: 50,
   web: 500,
-  pro: 2000,
+  pro: 4000,
   enterprise: Infinity,
 };
 
@@ -162,7 +162,7 @@ export default async function CompanyPage({
     return sv ? verifySessionCookie(sv) : null;
   })();
 
-  // Paid web session bypass (£19/mo plan)
+  // Paid web session bypass (£9/mo plan)
   let isUnlimited = false;
   if (wsid) {
     isUnlimited = await checkWebSession(wsid);

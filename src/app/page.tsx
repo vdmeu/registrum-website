@@ -544,7 +544,7 @@ const plans = [
   },
   {
     name: "Web",
-    price: "£19",
+    price: "£9",
     period: "per month",
     calls: "500 calls / month",
     burst: "30 / min",
@@ -570,13 +570,13 @@ const plans = [
     name: "Enterprise",
     price: "£149",
     period: "per month",
-    calls: "From 10,000 / month",
+    calls: "Unlimited",
     burst: "150 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
     plan: null as null,
-    features: ["Everything in Pro", "From 10,000 calls / month", "Dedicated support", "Custom volume on request"],
+    features: ["Everything in Pro", "Unlimited API calls", "Dedicated support", "Custom volume on request"],
   },
 ];
 

@@ -6,7 +6,7 @@ import SiteNav from "@/components/SiteNav";
 export const metadata: Metadata = {
   title: "Intelligent Caching · Registrum",
   description:
-    "How Registrum caches Companies House data: 24h company profiles, 7-day financials, stale-while-revalidate during outages. Never hit the 600 req/5min rate limit again.",
+    "How Registrum caches Companies House data: 30-day company profiles, 90-day financials, stale-while-revalidate during outages. Never hit the 600 req/5min rate limit again.",
 };
 
 export default function Caching() {
@@ -91,11 +91,11 @@ export default function Caching() {
               </thead>
               <tbody className="divide-y divide-white/[0.04] text-[#7A8FAD]">
                 {[
-                  ["/v1/company/{number}", "24 hours", "Company status changes infrequently; directors, SIC, addresses are stable day-to-day"],
-                  ["/v1/company/{number}/financials", "7 days", "Accounts are filed annually; iXBRL parsing is expensive — no point re-parsing daily"],
-                  ["/v1/company/{number}/directors", "24 hours", "Appointment changes are filed within days; a 24h window is accurate enough"],
-                  ["/v1/company/{number}/network", "24 hours", "Network derives from director data — same cadence"],
-                  ["/v1/company/{number}/psc", "24 hours", "PSC register changes are filed within days; active/ceased split is stable at this cadence"],
+                  ["/v1/company/{number}", "30 days", "Company status changes infrequently; directors, SIC, addresses are stable day-to-day"],
+                  ["/v1/company/{number}/financials", "90 days", "Accounts are filed annually; iXBRL parsing is expensive — no point re-parsing daily"],
+                  ["/v1/company/{number}/directors", "30 days", "Appointment changes are filed within days; a 30-day window is accurate enough"],
+                  ["/v1/company/{number}/network", "30 days", "Network derives from director data — same cadence"],
+                  ["/v1/company/{number}/psc", "30 days", "PSC register changes are filed within days; active/ceased split is stable at this cadence"],
                   ["/v1/company/{number}/psc/chain", "fresh per call", "Chain traverses multiple companies — result depends on live PSC state at each node. Not cached."],
                   ["/v1/search", "1 hour", "Company name/status changes rarely; search index updates are gradual"],
                 ].map(([endpoint, ttl, rationale]) => (
@@ -243,7 +243,7 @@ function FlowDiagram({ variant }: { variant: "raw" | "registrum" }) {
     <div className="space-y-3">
       <FlowStep label="Your app" color="neutral" note="Makes request" />
       <FlowArrow latency="~8 ms (cache hit)" />
-      <FlowStep label="Registrum cache" color="green" note="Supabase · 24h TTL" />
+      <FlowStep label="Registrum cache" color="green" note="Supabase · 30-90 day TTL" />
       <div className="ml-4 border-l-2 border-dashed border-white/10 pl-4">
         <p className="mb-2 text-xs text-[#3D5275]">Cache miss only (first request, or after TTL):</p>
         <FlowArrow latency="~480 ms" faded />

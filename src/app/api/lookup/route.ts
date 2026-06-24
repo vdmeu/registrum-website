@@ -6,7 +6,7 @@ import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 const PLAN_QUOTAS: Record<string, number> = {
   free: 50,
   web: 500,
-  pro: 2000,
+  pro: 4000,
   enterprise: Infinity,
 };
 

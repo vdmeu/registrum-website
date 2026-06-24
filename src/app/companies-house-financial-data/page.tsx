@@ -219,7 +219,7 @@ export default function CompaniesHouseFinancialDataPage() {
                 </pre>
               </div>
               <p className="mt-3 text-sm text-[#3D5275]">
-                Financial data is cached for 7 days. Company number <code className="font-[family-name:var(--font-geist-mono)]">00445790</code> is Tesco PLC — used here as a publicly available reference example.
+                Financial data is cached for 90 days. Company number <code className="font-[family-name:var(--font-geist-mono)]">00445790</code> is Tesco PLC — used here as a publicly available reference example.
               </p>
             </div>
 

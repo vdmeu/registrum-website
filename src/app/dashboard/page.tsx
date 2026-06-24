@@ -22,8 +22,8 @@ interface KeyRecord {
   stripe_customer_id: string | null;
 }
 
-function planLimit(plan: string): number {
-  const limits: Record<string, number> = { free: 50, pro: 2000, enterprise: 10000 };
+function planLimit(plan: string): number | null {
+  const limits: Record<string, number | null> = { free: 50, web: 500, pro: 4000, enterprise: null };
   return limits[plan] ?? 50;
 }
 
@@ -62,7 +62,7 @@ export default async function DashboardPage({
   }
 
   const limit = planLimit(key.plan);
-  const pct = Math.min(100, Math.round((key.calls_this_month / limit) * 100));
+  const pct = limit !== null ? Math.min(100, Math.round((key.calls_this_month / limit) * 100)) : null;
   const resetDate = fmtDate(key.month_reset_at);
 
   return (
@@ -90,27 +90,33 @@ export default async function DashboardPage({
 
           <div className="flex items-end gap-2 mb-3">
             <span className="text-3xl font-semibold text-white">{key.calls_this_month.toLocaleString()}</span>
-            <span className="text-sm text-[#3D5275] mb-1">/ {limit.toLocaleString()} calls</span>
+            <span className="text-sm text-[#3D5275] mb-1">
+              {limit !== null ? `/ ${limit.toLocaleString()} calls` : "calls (unlimited)"}
+            </span>
           </div>
 
           {/* Progress bar */}
-          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-2">
-            <div
-              className={`h-full rounded-full transition-all ${pct >= 90 ? "bg-red-400" : pct >= 70 ? "bg-amber-400" : "bg-[#4F7BFF]"}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-[#3D5275]">
-            <span>{pct}% used</span>
-            <span>Resets {resetDate}</span>
-          </div>
+          {pct !== null && (
+            <>
+              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden mb-2">
+                <div
+                  className={`h-full rounded-full transition-all ${pct >= 90 ? "bg-red-400" : pct >= 70 ? "bg-amber-400" : "bg-[#4F7BFF]"}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-[#3D5275]">
+                <span>{pct}% used</span>
+                <span>Resets {resetDate}</span>
+              </div>
+            </>
+          )}
 
           {key.plan === "free" && (
             <div className="mt-4 rounded-lg border border-[#4F7BFF]/20 bg-[#4F7BFF]/5 px-4 py-3">
               <p className="text-sm text-[#7A8FAD]">
                 Need more calls?{" "}
                 <Link href="/#pricing" className="text-[#4F7BFF] hover:underline">
-                  Upgrade to Pro — 2,000 calls/month for £49
+                  Upgrade to Pro — 4,000 calls/month for £49
                 </Link>
               </p>
             </div>

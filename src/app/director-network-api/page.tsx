@@ -229,7 +229,7 @@ export default function DirectorNetworkApiPage() {
                 </pre>
               </div>
               <p className="mt-3 text-sm text-[#3D5275]">
-                Director data is cached for 24 hours. Large networks (depth=2 on a company with
+                Director data is cached for 30 days. Large networks (depth=2 on a company with
                 many directors) may return dozens of connected companies — use{" "}
                 <code className="font-[family-name:var(--font-geist-mono)]">depth=1</code> first to understand the immediate connections before
                 expanding the traversal.
