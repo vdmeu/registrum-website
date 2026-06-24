@@ -8,6 +8,7 @@ import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 import { tescoFinancials } from "@/lib/tescoFinancials";
 import { TESCO_DIRECTORS } from "@/lib/tescoDirectors";
 import { DEMO_PSC } from "@/lib/demoPSC";
+import { getPlans } from "@/lib/plans";
 
 const API_URL = "https://api.registrum.co.uk/v1";
 
@@ -75,13 +76,6 @@ interface ApiKeyRecord {
   plan: string;
   calls_this_month: number;
 }
-
-const PLAN_QUOTAS: Record<string, number> = {
-  free: 50,
-  web: 500,
-  pro: 4000,
-  enterprise: Infinity,
-};
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
@@ -184,8 +178,10 @@ export default async function CompanyPage({
       .maybeSingle();
     userRecord = data ?? null;
     if (userRecord) {
-      const quota = PLAN_QUOTAS[userRecord.plan] ?? 50;
-      paywalled = userRecord.calls_this_month >= quota;
+      const plans = await getPlans();
+      // null = unlimited (e.g. enterprise) — only fall back to free's default when the plan is unrecognized
+      const quota = userRecord.plan in plans ? plans[userRecord.plan].monthly_limit : plans.free.monthly_limit;
+      paywalled = quota !== null && userRecord.calls_this_month >= quota;
     }
   }
 

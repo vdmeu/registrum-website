@@ -5,6 +5,7 @@ import CheckoutButton from "@/components/CheckoutButton";
 import HeroCodeBlock from "@/components/HeroCodeBlock";
 import CodeBlock from "@/components/CodeBlock";
 import SiteNav from "@/components/SiteNav";
+import { getPlans, priceLabel, callsLabel, burstLabel } from "@/lib/plans";
 
 export default function Home() {
   return (
@@ -529,13 +530,11 @@ function FeatureMatrix() {
 
 /* ─── Pricing ─────────────────────────────────────────────────────────────── */
 
-const plans = [
+const PLAN_COPY = [
   {
     name: "Free",
-    price: "£0",
+    tier: "free",
     period: "forever",
-    calls: "5 lookups / day",
-    burst: "10 / min",
     highlight: false,
     cta: "Get started",
     ctaHref: "#get-key",
@@ -544,10 +543,8 @@ const plans = [
   },
   {
     name: "Web",
-    price: "£9",
+    tier: "web",
     period: "per month",
-    calls: "500 calls / month",
-    burst: "30 / min",
     highlight: false,
     cta: "Get started",
     ctaHref: null,
@@ -556,10 +553,8 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "£49",
+    tier: "pro",
     period: "per month",
-    calls: "4,000 calls / month",
-    burst: "100 / min",
     highlight: true,
     cta: "Get started",
     ctaHref: null,
@@ -568,10 +563,8 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "£149",
+    tier: "enterprise",
     period: "per month",
-    calls: "Unlimited",
-    burst: "150 / min",
     highlight: false,
     cta: "Contact us",
     ctaHref: "mailto:api@registrum.co.uk",
@@ -580,7 +573,15 @@ const plans = [
   },
 ];
 
-function Pricing() {
+async function Pricing() {
+  const livePlans = await getPlans();
+  const plans = PLAN_COPY.map((p) => ({
+    ...p,
+    price: priceLabel(livePlans, p.tier) ?? "£149", // enterprise has no fixed API price - "from" figure, contact us for actual
+    calls: callsLabel(livePlans, p.tier),
+    burst: burstLabel(livePlans, p.tier),
+  }));
+
   return (
     <section id="pricing" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">

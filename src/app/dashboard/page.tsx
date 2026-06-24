@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 import { getSupabase } from "@/lib/supabase";
+import { getPlans, type PlanDetail } from "@/lib/plans";
 import DashboardClient from "./DashboardClient";
 import DashboardLookup from "./DashboardLookup";
 import SiteNav from "@/components/SiteNav";
@@ -22,9 +23,9 @@ interface KeyRecord {
   stripe_customer_id: string | null;
 }
 
-function planLimit(plan: string): number | null {
-  const limits: Record<string, number | null> = { free: 50, web: 500, pro: 4000, enterprise: null };
-  return limits[plan] ?? 50;
+function planLimit(plans: Record<string, PlanDetail>, plan: string): number | null {
+  // null is meaningful here (unlimited, e.g. enterprise) - only fall back when the plan is unrecognized
+  return plan in plans ? plans[plan].monthly_limit : plans.free.monthly_limit;
 }
 
 function fmtDate(iso: string): string {
@@ -61,7 +62,8 @@ export default async function DashboardPage({
     return <NoKeyPage email={email} />;
   }
 
-  const limit = planLimit(key.plan);
+  const plans = await getPlans();
+  const limit = planLimit(plans, key.plan);
   const pct = limit !== null ? Math.min(100, Math.round((key.calls_this_month / limit) * 100)) : null;
   const resetDate = fmtDate(key.month_reset_at);
 
@@ -116,7 +118,7 @@ export default async function DashboardPage({
               <p className="text-sm text-[#7A8FAD]">
                 Need more calls?{" "}
                 <Link href="/#pricing" className="text-[#4F7BFF] hover:underline">
-                  Upgrade to Pro — 4,000 calls/month for £49
+                  Upgrade to Pro — {plans.pro.monthly_limit?.toLocaleString()} calls/month for £{plans.pro.price_gbp}
                 </Link>
               </p>
             </div>

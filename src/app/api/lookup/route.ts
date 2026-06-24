@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { getSupabase } from "@/lib/supabase";
 import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
-
-const PLAN_QUOTAS: Record<string, number> = {
-  free: 50,
-  web: 500,
-  pro: 4000,
-  enterprise: Infinity,
-};
+import { getPlans } from "@/lib/plans";
 
 const API_URL = "https://api.registrum.co.uk/v1";
 const FREE_DAILY_LIMIT = 10;
@@ -72,9 +66,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (userRecord) {
-    // Logged-in: check monthly plan quota
-    const quota = PLAN_QUOTAS[userRecord.plan] ?? 50;
-    if (userRecord.calls_this_month >= quota) {
+    // Logged-in: check monthly plan quota (null = unlimited, e.g. enterprise)
+    const plans = await getPlans();
+    const quota = plans[userRecord.plan] ? plans[userRecord.plan].monthly_limit : plans.free.monthly_limit;
+    if (quota !== null && userRecord.calls_this_month >= quota) {
       return NextResponse.json(
         {
           error: "QUOTA_EXCEEDED",
