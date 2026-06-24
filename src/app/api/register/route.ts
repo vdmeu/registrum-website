@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { createMagicToken } from "@/lib/dashboard-auth";
+import { getPlans } from "@/lib/plans";
+import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
 
 const SITE_URL = "https://registrum.co.uk";
 
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
       from: "Registrum <api@registrum.co.uk>",
       to: email,
       subject: "Your Registrum API key (already active)",
-      html: buildEmailHtml(existing[0].key_prefix + "…", true, verifyUrl),
+      html: await buildEmailHtml(existing[0].key_prefix + "…", true, verifyUrl),
     });
     return NextResponse.json({ ok: true, message: "Key already exists — check your inbox." });
   }
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
     from: "Registrum <api@registrum.co.uk>",
     to: email,
     subject: "Your Registrum API key",
-    html: buildEmailHtml(fullKey, false, verifyUrl),
+    html: await buildEmailHtml(fullKey, false, verifyUrl),
   });
 
   if (emailError) {
@@ -99,30 +101,14 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-function buildEmailHtml(key: string, isResend: boolean, verifyUrl: string): string {
+async function buildEmailHtml(key: string, isResend: boolean, verifyUrl: string): Promise<string> {
   const headline = isResend ? "Your Registrum account is already active" : "Your Registrum account is ready";
   const introLine = isResend
     ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">You already have an active Registrum account. Here&apos;s your API key prefix as a reminder &mdash; if you&apos;ve lost the full key, you can rotate it from your dashboard or reply to this email.</p>`
     : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">Your account is set up. Your email address is your login &mdash; use it at your dashboard to look up companies in your browser or manage your API key. Keep the key below safe; we won&apos;t show it again.</p>`;
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${headline}</title>
-</head>
-<body style="margin:0;padding:0;background:#060D1B;font-family:system-ui,sans-serif;color:#E8F0FE">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060D1B;padding:40px 20px">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#0A1628;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:100%">
-        <tr>
-          <td style="padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <span style="font-size:18px;font-weight:600;color:#fff">Registrum</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px 40px">
+  const plans = await getPlans();
+  const body = `
             <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#fff">${headline}</h1>
             ${introLine}
             <div style="margin:24px 0;background:#060D1B;border:1px solid rgba(79,123,255,0.3);border-radius:8px;padding:16px 20px;font-family:monospace;font-size:14px;color:#E8F0FE;word-break:break-all">
@@ -131,48 +117,27 @@ function buildEmailHtml(key: string, isResend: boolean, verifyUrl: string): stri
             <h2 style="margin:24px 0 12px;font-size:16px;font-weight:600;color:#fff">Get started in 30 seconds</h2>
             <pre style="margin:0 0 24px;background:#060D1B;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:16px 20px;font-size:13px;color:#7A8FAD;overflow:auto;white-space:pre-wrap"><code>curl -H "X-API-Key: ${key}" \\
   https://api.registrum.co.uk/v1/company/00445790</code></pre>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:0 12px 0 0">
-                  <a href="https://registrum.co.uk/quickstart" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Quickstart guide</a>
-                </td>
-                <td style="padding:0 12px 0 0">
-                  <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
-                </td>
-                <td>
-                  <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
-                </td>
-              </tr>
-            </table>
+            ${emailButtonRow([
+              { href: "https://registrum.co.uk/quickstart", label: "Quickstart guide", primary: true },
+              { href: "https://api.registrum.co.uk/docs", label: "API docs" },
+              { href: verifyUrl, label: "Open your dashboard" },
+            ])}
             <table style="margin-top:32px;width:100%;border-top:1px solid rgba(255,255,255,0.06);padding-top:24px" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:0 16px 0 0;border-right:1px solid rgba(255,255,255,0.06)">
-                  <div style="font-size:20px;font-weight:600;color:#fff">50</div>
+                  <div style="font-size:20px;font-weight:600;color:#fff">${plans.free.monthly_limit}</div>
                   <div style="font-size:11px;color:#7A8FAD;margin-top:2px">free calls / month</div>
                 </td>
                 <td style="padding:0 16px">
-                  <div style="font-size:20px;font-weight:600;color:#fff">24h</div>
+                  <div style="font-size:20px;font-weight:600;color:#fff">30d</div>
                   <div style="font-size:11px;color:#7A8FAD;margin-top:2px">company cache</div>
                 </td>
                 <td style="padding:0 0 0 16px;border-left:1px solid rgba(255,255,255,0.06)">
-                  <div style="font-size:20px;font-weight:600;color:#fff">7d</div>
+                  <div style="font-size:20px;font-weight:600;color:#fff">90d</div>
                   <div style="font-size:11px;color:#7A8FAD;margin-top:2px">financials cache</div>
                 </td>
               </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
-            <p style="margin:0;font-size:12px;color:#3D5275;line-height:1.6">
-              Questions? Reply to this email or contact <a href="mailto:support@registrum.co.uk" style="color:#4F7BFF">support@registrum.co.uk</a><br>
-              Eugene Merwe-Chartier trading as Registrum &middot; Data sourced under the Open Government Licence v3.0
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+            </table>`;
+
+  return wrapEmail(headline, body);
 }

@@ -6,6 +6,8 @@ import { getStripe } from "@/lib/stripe";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { createMagicToken } from "@/lib/dashboard-auth";
+import { getPlans } from "@/lib/plans";
+import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
 
 const SITE_URL = "https://registrum.co.uk";
 
@@ -128,8 +130,8 @@ export async function POST(req: NextRequest) {
               : "Your Registrum Pro plan is active";
           const emailHtml =
             plan === "web"
-              ? buildWebEmail(email, verifyUrl, firstName)
-              : buildProUpgradeEmail(existingKey.key_prefix, verifyUrl, firstName);
+              ? await buildWebEmail(email, verifyUrl, firstName)
+              : await buildProUpgradeEmail(existingKey.key_prefix, verifyUrl, firstName);
 
           const { error: emailError } = await getResend().emails.send({
             from: "Registrum <api@registrum.co.uk>",
@@ -173,8 +175,8 @@ export async function POST(req: NextRequest) {
             : "Your Registrum Pro API key";
         const emailHtml =
           plan === "web"
-            ? buildWebEmail(email, verifyUrl, firstName)
-            : buildProKeyEmail(fullKey, verifyUrl, firstName);
+            ? await buildWebEmail(email, verifyUrl, firstName)
+            : await buildProKeyEmail(fullKey, verifyUrl, firstName);
 
         const { error: emailError } = await getResend().emails.send({
           from: "Registrum <api@registrum.co.uk>",
@@ -234,26 +236,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-function buildWebEmail(email: string, verifyUrl: string, firstName: string): string {
+async function buildWebEmail(email: string, verifyUrl: string, firstName: string): Promise<string> {
   const greeting = firstName ? `Hi ${firstName}, web subscription active` : "Web subscription active";
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your Registrum Web subscription is active</title>
-</head>
-<body style="margin:0;padding:0;background:#060D1B;font-family:system-ui,sans-serif;color:#E8F0FE">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060D1B;padding:40px 20px">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#0A1628;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:100%">
-        <tr>
-          <td style="padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <span style="font-size:18px;font-weight:600;color:#fff">Registrum</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px 40px">
+  const body = `
             <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#fff">${greeting}</h1>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">
               You now have unlimited UK company lookups on registrum.co.uk. Your subscription is linked to <strong style="color:#E8F0FE">${email}</strong>.
@@ -261,104 +246,33 @@ function buildWebEmail(email: string, verifyUrl: string, firstName: string): str
             <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#7A8FAD">
               After your first lookup, a session cookie is set automatically &mdash; no login required. Lookups are unlimited for 35 days per session.
             </p>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:0 12px 0 0">
-                  <a href="https://registrum.co.uk" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Start looking up companies</a>
-                </td>
-                <td>
-                  <a href="${verifyUrl}" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Open your dashboard</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
-            <p style="margin:0;font-size:12px;color:#3D5275;line-height:1.6">
-              Questions? Reply to this email or contact <a href="mailto:support@registrum.co.uk" style="color:#4F7BFF">support@registrum.co.uk</a><br>
-              Eugene Merwe-Chartier trading as Registrum &middot; Data sourced under the Open Government Licence v3.0
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+            ${emailButtonRow([
+              { href: "https://registrum.co.uk", label: "Start looking up companies", primary: true },
+              { href: verifyUrl, label: "Open your dashboard" },
+            ])}`;
+  return wrapEmail("Your Registrum Web subscription is active", body);
 }
 
-function buildProUpgradeEmail(keyPrefix: string, verifyUrl: string, firstName: string): string {
+async function buildProUpgradeEmail(keyPrefix: string, verifyUrl: string, firstName: string): Promise<string> {
   const greeting = firstName ? `Hi ${firstName}, you&apos;re on Pro` : "You&apos;re on Pro";
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your Registrum Pro plan is active</title>
-</head>
-<body style="margin:0;padding:0;background:#060D1B;font-family:system-ui,sans-serif;color:#E8F0FE">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060D1B;padding:40px 20px">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#0A1628;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:100%">
-        <tr>
-          <td style="padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <span style="font-size:18px;font-weight:600;color:#fff">Registrum</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px 40px">
+  const plans = await getPlans();
+  const monthly = plans.pro.monthly_limit?.toLocaleString();
+  const body = `
             <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#fff">${greeting}</h1>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#7A8FAD">
-              Your existing API key (<code style="color:#E8F0FE">${keyPrefix}&hellip;</code>) has been upgraded to the Pro plan &mdash; no need to change anything in your integration. New limits: 4,000 calls/month, 400 calls/day, director network up to depth=2.
+              Your existing API key (<code style="color:#E8F0FE">${keyPrefix}&hellip;</code>) has been upgraded to the Pro plan &mdash; no need to change anything in your integration. New limits: ${monthly} calls/month, ${plans.pro.daily_limit} calls/day, director network up to depth=2.
             </p>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:0 12px 0 0">
-                  <a href="${verifyUrl}" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Open your dashboard</a>
-                </td>
-                <td>
-                  <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
-            <p style="margin:0;font-size:12px;color:#3D5275;line-height:1.6">
-              Questions? Reply to this email or contact <a href="mailto:support@registrum.co.uk" style="color:#4F7BFF">support@registrum.co.uk</a><br>
-              Eugene Merwe-Chartier trading as Registrum &middot; Data sourced under the Open Government Licence v3.0
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+            ${emailButtonRow([
+              { href: verifyUrl, label: "Open your dashboard", primary: true },
+              { href: "https://api.registrum.co.uk/docs", label: "API docs" },
+            ])}`;
+  return wrapEmail("Your Registrum Pro plan is active", body);
 }
 
-function buildProKeyEmail(key: string, verifyUrl: string, firstName: string): string {
+async function buildProKeyEmail(key: string, verifyUrl: string, firstName: string): Promise<string> {
   const greeting = firstName ? `Hi ${firstName}, you&apos;re on Pro` : "You&apos;re on Pro";
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your Registrum Pro API key</title>
-</head>
-<body style="margin:0;padding:0;background:#060D1B;font-family:system-ui,sans-serif;color:#E8F0FE">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060D1B;padding:40px 20px">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#0A1628;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;max-width:100%">
-        <tr>
-          <td style="padding:32px 40px 24px;border-bottom:1px solid rgba(255,255,255,0.06)">
-            <span style="font-size:18px;font-weight:600;color:#fff">Registrum</span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px 40px">
+  const plans = await getPlans();
+  const body = `
             <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;color:#fff">${greeting}</h1>
             <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#7A8FAD">Here&apos;s your Pro API key. Keep it safe &mdash; we won&apos;t show it again.</p>
             <div style="margin:0 0 24px;background:#060D1B;border:1px solid rgba(79,123,255,0.3);border-radius:8px;padding:16px 20px;font-family:monospace;font-size:14px;color:#E8F0FE;word-break:break-all">
@@ -406,48 +320,15 @@ function buildProKeyEmail(key: string, verifyUrl: string, firstName: string): st
                 </td>
               </tr>
             </table>
-            <table style="width:100%;margin:0 0 28px;border:1px solid rgba(255,255,255,0.06);border-radius:8px" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:14px 20px;border-right:1px solid rgba(255,255,255,0.06);text-align:center">
-                  <div style="font-size:20px;font-weight:600;color:#fff">2,000</div>
-                  <div style="font-size:11px;color:#7A8FAD;margin-top:2px">calls / month</div>
-                </td>
-                <td style="padding:14px 20px;border-right:1px solid rgba(255,255,255,0.06);text-align:center">
-                  <div style="font-size:20px;font-weight:600;color:#fff">400</div>
-                  <div style="font-size:11px;color:#7A8FAD;margin-top:2px">calls / day</div>
-                </td>
-                <td style="padding:14px 20px;text-align:center">
-                  <div style="font-size:20px;font-weight:600;color:#fff">depth=2</div>
-                  <div style="font-size:11px;color:#7A8FAD;margin-top:2px">director network</div>
-                </td>
-              </tr>
-            </table>
-            <table cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:0 12px 0 0">
-                  <a href="${verifyUrl}" style="display:inline-block;background:#4F7BFF;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:500">Open your dashboard</a>
-                </td>
-                <td style="padding:0 12px">
-                  <a href="https://api.registrum.co.uk/docs" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">API docs</a>
-                </td>
-                <td>
-                  <a href="https://registrum.co.uk/quickstart" style="display:inline-block;border:1px solid rgba(255,255,255,0.1);color:#E8F0FE;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:14px">Quickstart</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
-            <p style="margin:0;font-size:12px;color:#3D5275;line-height:1.6">
-              Questions? Reply to this email or contact <a href="mailto:support@registrum.co.uk" style="color:#4F7BFF">support@registrum.co.uk</a><br>
-              Eugene Merwe-Chartier trading as Registrum &middot; Data sourced under the Open Government Licence v3.0
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
+            ${emailStatsRow([
+              { value: plans.pro.monthly_limit?.toLocaleString() ?? "", label: "calls / month" },
+              { value: String(plans.pro.daily_limit ?? ""), label: "calls / day" },
+              { value: "depth=2", label: "director network" },
+            ])}
+            ${emailButtonRow([
+              { href: verifyUrl, label: "Open your dashboard", primary: true },
+              { href: "https://api.registrum.co.uk/docs", label: "API docs" },
+              { href: "https://registrum.co.uk/quickstart", label: "Quickstart" },
+            ])}`;
+  return wrapEmail("Your Registrum Pro API key", body);
 }
