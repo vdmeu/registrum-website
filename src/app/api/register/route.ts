@@ -1,32 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { createMagicToken } from "@/lib/dashboard-auth";
 import { getPlans } from "@/lib/plans";
 import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
-
-const SITE_URL = "https://registrum.co.uk";
-
-const KEY_PREFIX_LENGTH = 14; // "reg_live_" (9) + 5 hex chars
-
-function generateKey(): { fullKey: string; prefix: string; keyHash: string } {
-  const randomPart = crypto.randomBytes(16).toString("hex"); // 32 hex chars
-  const fullKey = `reg_live_${randomPart}`;
-  const prefix = fullKey.slice(0, KEY_PREFIX_LENGTH);
-  const keyHash = bcrypt.hashSync(fullKey, 10);
-  return { fullKey, prefix, keyHash };
-}
-
-function nextMonthReset(): string {
-  const now = new Date();
-  const reset =
-    now.getMonth() === 11
-      ? new Date(now.getFullYear() + 1, 0, 1)
-      : new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return reset.toISOString();
-}
+import { SITE_URL } from "@/lib/constants";
+import { generateKey, nextMonthReset } from "@/lib/apiKeys";
+import { captureException } from "@/lib/sentry";
 
 export async function POST(request: NextRequest) {
   let email: string;
@@ -78,6 +58,7 @@ export async function POST(request: NextRequest) {
 
   if (insertError) {
     console.error("api_keys insert error", insertError);
+    await captureException(insertError, { route: "register", email });
     return NextResponse.json(
       { error: "Could not provision key. Please try again." },
       { status: 500 }

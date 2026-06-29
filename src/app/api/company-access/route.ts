@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { createMagicToken } from "@/lib/dashboard-auth";
-
-const SITE_URL = "https://registrum.co.uk";
+import { SITE_URL } from "@/lib/constants";
+import { generateKey, nextMonthReset } from "@/lib/apiKeys";
 
 function isValidReturnUrl(url: unknown): url is string {
   return typeof url === "string" && /^\/company\/\d{7,8}$/.test(url);
@@ -14,23 +12,6 @@ function isValidReturnUrl(url: unknown): url is string {
 function buildVerifyUrl(email: string, returnUrl: string): string {
   const token = createMagicToken(email);
   return `${SITE_URL}/api/dashboard/verify?token=${encodeURIComponent(token)}&returnUrl=${encodeURIComponent(returnUrl)}`;
-}
-
-function nextMonthReset(): string {
-  const now = new Date();
-  const reset =
-    now.getMonth() === 11
-      ? new Date(now.getFullYear() + 1, 0, 1)
-      : new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return reset.toISOString();
-}
-
-function generateKey(): { fullKey: string; prefix: string; keyHash: string } {
-  const randomPart = crypto.randomBytes(16).toString("hex");
-  const fullKey = `reg_live_${randomPart}`;
-  const prefix = fullKey.slice(0, 14);
-  const keyHash = bcrypt.hashSync(fullKey, 10);
-  return { fullKey, prefix, keyHash };
 }
 
 export async function POST(request: NextRequest) {

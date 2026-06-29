@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-
-const SITE_URL = "https://registrum.co.uk";
+import { SITE_URL } from "@/lib/constants";
 
 function normaliseCompanyNumber(raw: string): string {
   const trimmed = raw.trim().toUpperCase();

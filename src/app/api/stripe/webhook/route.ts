@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getSupabase } from "@/lib/supabase";
@@ -8,8 +6,9 @@ import { getResend } from "@/lib/resend";
 import { createMagicToken } from "@/lib/dashboard-auth";
 import { getPlans } from "@/lib/plans";
 import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
-
-const SITE_URL = "https://registrum.co.uk";
+import { SITE_URL } from "@/lib/constants";
+import { generateKey, nextMonthReset } from "@/lib/apiKeys";
+import { captureException } from "@/lib/sentry";
 
 function firstNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "";
@@ -23,10 +22,15 @@ async function notifyNewSubscriber(email: string, plan: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
+  // Price comes from the API's GET /v1/plans (single source of truth) rather
+  // than a hardcoded £49/£9 string that silently drifts when pricing changes.
+  const plans = await getPlans();
+  const price = plans[plan]?.price_gbp;
+  const priceLabel = price != null ? `£${price}/month` : "custom pricing";
   const text =
     `💳 *New paying subscriber*\n` +
     `Email: \`${email}\`\n` +
-    `Plan: ${plan} (£${plan === "pro" ? "49" : "9"}/month)`;
+    `Plan: ${plan} (${priceLabel})`;
   try {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
@@ -36,25 +40,6 @@ async function notifyNewSubscriber(email: string, plan: string): Promise<void> {
   } catch {
     console.error("telegram alert failed");
   }
-}
-
-const KEY_PREFIX_LENGTH = 14;
-
-function generateKey(): { fullKey: string; prefix: string; keyHash: string } {
-  const randomPart = crypto.randomBytes(16).toString("hex");
-  const fullKey = `reg_live_${randomPart}`;
-  const prefix = fullKey.slice(0, KEY_PREFIX_LENGTH);
-  const keyHash = bcrypt.hashSync(fullKey, 10);
-  return { fullKey, prefix, keyHash };
-}
-
-function nextMonthReset(): string {
-  const now = new Date();
-  const reset =
-    now.getMonth() === 11
-      ? new Date(now.getFullYear() + 1, 0, 1)
-      : new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return reset.toISOString();
 }
 
 export async function POST(req: NextRequest) {
@@ -230,6 +215,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("webhook handler error", err);
+    await captureException(err, { route: "stripe/webhook", eventType: event.type });
     return NextResponse.json({ error: "Handler error" }, { status: 500 });
   }
 
