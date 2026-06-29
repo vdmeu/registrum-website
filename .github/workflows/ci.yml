@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Lint is non-blocking for now: the repo has pre-existing
+      # @next/next/no-html-link-for-pages violations across marketing pages
+      # that predate CI. Surfaced here but not gating until cleaned up.
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build needs these client/server vars present; CI uses dummy
+          # values since no real backend calls happen during `next build`.
+          SUPABASE_URL: "https://example.supabase.co"
+          SUPABASE_SERVICE_ROLE_KEY: "dummy"
+          DASHBOARD_SECRET: "dummy-ci-secret"
+
+      - name: Test
+        run: npm test
