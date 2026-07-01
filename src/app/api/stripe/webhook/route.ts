@@ -9,6 +9,12 @@ import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
 import { SITE_URL } from "@/lib/constants";
 import { generateKey, nextMonthReset } from "@/lib/apiKeys";
 import { captureException } from "@/lib/sentry";
+import { createApiKey, updateApiKeyPlan } from "@/lib/internal-api";
+
+/** True when the R1 single-writer flag is explicitly set to "true". */
+function useInternalApi(): boolean {
+  return process.env.USE_API_INTERNAL_API_KEYS === "true";
+}
 
 function firstNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "";
@@ -93,18 +99,34 @@ export async function POST(req: NextRequest) {
         const firstName = firstNameFromEmail(email);
 
         if (existingKey) {
-          const { error: updateError } = await getSupabase()
-            .from("api_keys")
-            .update({
+          // R1 path: plan update goes through the internal API, carrying the
+          // stripe ids so a later subscription.deleted / payment_failed webhook
+          // can locate this key by stripe_subscription_id and downgrade it
+          // (parity with the direct-write path below).
+          if (useInternalApi()) {
+            const updated = await updateApiKeyPlan(existingKey.id, {
               plan,
               stripe_customer_id: session.customer as string | null,
               stripe_subscription_id: session.subscription as string | null,
-            })
-            .eq("id", existingKey.id);
+            });
+            if (!updated) {
+              console.error("api_keys updateApiKeyPlan returned null for id:", existingKey.id);
+              break;
+            }
+          } else {
+            const { error: updateError } = await getSupabase()
+              .from("api_keys")
+              .update({
+                plan,
+                stripe_customer_id: session.customer as string | null,
+                stripe_subscription_id: session.subscription as string | null,
+              })
+              .eq("id", existingKey.id);
 
-          if (updateError) {
-            console.error("api_keys update error", updateError);
-            break;
+            if (updateError) {
+              console.error("api_keys update error", updateError);
+              break;
+            }
           }
 
           const emailSubject =
@@ -133,23 +155,43 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        const { fullKey, prefix, keyHash } = generateKey();
+        // No existing key: create one.
+        let fullKey: string;
+        let prefix: string;
 
-        const { error: insertError } = await getSupabase().from("api_keys").insert({
-          key_prefix: prefix,
-          key_hash: keyHash,
-          plan,
-          label: email,
-          calls_this_month: 0,
-          month_reset_at: nextMonthReset(),
-          is_active: true,
-          stripe_customer_id: session.customer as string | null,
-          stripe_subscription_id: session.subscription as string | null,
-        });
+        if (useInternalApi()) {
+          // R1 path: create via internal API, persisting the stripe ids so this
+          // paid key can later be located + downgraded by subscription webhooks.
+          const row = await createApiKey({
+            plan,
+            label: email,
+            stripe_customer_id: session.customer as string | null,
+            stripe_subscription_id: session.subscription as string | null,
+          });
+          fullKey = row.full_key;
+          prefix = row.key_prefix;
+        } else {
+          // Legacy path: direct Supabase insert.
+          const generated = generateKey();
+          fullKey = generated.fullKey;
+          prefix = generated.prefix;
 
-        if (insertError) {
-          console.error("api_keys insert error", insertError);
-          break;
+          const { error: insertError } = await getSupabase().from("api_keys").insert({
+            key_prefix: prefix,
+            key_hash: generated.keyHash,
+            plan,
+            label: email,
+            calls_this_month: 0,
+            month_reset_at: nextMonthReset(),
+            is_active: true,
+            stripe_customer_id: session.customer as string | null,
+            stripe_subscription_id: session.subscription as string | null,
+          });
+
+          if (insertError) {
+            console.error("api_keys insert error", insertError);
+            break;
+          }
         }
 
         const emailSubject =
@@ -181,17 +223,39 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
 
-        // Downgrade api_keys
-        const { error } = await getSupabase()
-          .from("api_keys")
-          .update({ plan: "free" })
-          .eq("stripe_subscription_id", subscription.id);
+        // Downgrade api_keys — R1: route plan update through the internal API.
+        if (useInternalApi()) {
+          // Look up the key ID via Supabase (read-only, allowed in R1).
+          const { data: keyRow } = await getSupabase()
+            .from("api_keys")
+            .select("id")
+            .eq("stripe_subscription_id", subscription.id)
+            .eq("is_active", true)
+            .limit(1)
+            .maybeSingle();
 
-        if (error) {
-          console.error("subscription downgrade error", error);
+          if (keyRow) {
+            const updated = await updateApiKeyPlan(keyRow.id, { plan: "free" });
+            if (!updated) {
+              console.error("api_keys updateApiKeyPlan returned null for id:", keyRow.id);
+            }
+          } else {
+            console.error("subscription downgrade: key not found for sub:", subscription.id);
+          }
+        } else {
+          // Legacy path: direct Supabase update by stripe_subscription_id.
+          const { error } = await getSupabase()
+            .from("api_keys")
+            .update({ plan: "free" })
+            .eq("stripe_subscription_id", subscription.id);
+
+          if (error) {
+            console.error("subscription downgrade error", error);
+          }
         }
 
-        // Also remove web_sessions for this customer
+        // Also remove web_sessions for this customer (not an api_keys write —
+        // web_sessions are outside R1 scope, always direct Supabase).
         const customerId =
           typeof subscription.customer === "string"
             ? subscription.customer

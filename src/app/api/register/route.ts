@@ -7,6 +7,12 @@ import { wrapEmail, emailButtonRow, emailStatsRow } from "@/lib/email-template";
 import { SITE_URL } from "@/lib/constants";
 import { generateKey, nextMonthReset } from "@/lib/apiKeys";
 import { captureException } from "@/lib/sentry";
+import { createApiKey } from "@/lib/internal-api";
+
+/** True when the R1 single-writer flag is explicitly set to "true". */
+function useInternalApi(): boolean {
+  return process.env.USE_API_INTERNAL_API_KEYS === "true";
+}
 
 export async function POST(request: NextRequest) {
   let email: string;
@@ -43,26 +49,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, message: "Key already exists — check your inbox." });
   }
 
-  // Generate and insert new key
-  const { fullKey, prefix, keyHash } = generateKey();
+  // Provision a new key — either via the internal API (R1 flag ON) or direct Supabase write.
+  let fullKey: string;
+  let prefix: string;
 
-  const { error: insertError } = await getSupabase().from("api_keys").insert({
-    key_prefix: prefix,
-    key_hash: keyHash,
-    plan: "free",
-    label: email,
-    calls_this_month: 0,
-    month_reset_at: nextMonthReset(),
-    is_active: true,
-  });
+  if (useInternalApi()) {
+    // R1 path: API is the single writer of api_keys.
+    try {
+      const row = await createApiKey({ plan: "free", label: email });
+      fullKey = row.full_key;
+      prefix = row.key_prefix;
+    } catch (err) {
+      console.error("internal api createApiKey error", err);
+      await captureException(err, { route: "register", email });
+      return NextResponse.json(
+        { error: "Could not provision key. Please try again." },
+        { status: 500 }
+      );
+    }
+  } else {
+    // Legacy path: write directly to Supabase.
+    const { fullKey: fk, prefix: px, keyHash } = generateKey();
+    fullKey = fk;
+    prefix = px;
 
-  if (insertError) {
-    console.error("api_keys insert error", insertError);
-    await captureException(insertError, { route: "register", email });
-    return NextResponse.json(
-      { error: "Could not provision key. Please try again." },
-      { status: 500 }
-    );
+    const { error: insertError } = await getSupabase().from("api_keys").insert({
+      key_prefix: prefix,
+      key_hash: keyHash,
+      plan: "free",
+      label: email,
+      calls_this_month: 0,
+      month_reset_at: nextMonthReset(),
+      is_active: true,
+    });
+
+    if (insertError) {
+      console.error("api_keys insert error", insertError);
+      await captureException(insertError, { route: "register", email });
+      return NextResponse.json(
+        { error: "Could not provision key. Please try again." },
+        { status: 500 }
+      );
+    }
   }
 
   // Send key delivery email
