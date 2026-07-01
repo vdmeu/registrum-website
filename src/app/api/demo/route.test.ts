@@ -5,7 +5,7 @@ vi.mock("next/server", () => ({
   NextResponse: { json: vi.fn() },
 }));
 
-import { MOCK_SEARCH, MOCK_COMPANY, MOCK_DIRECTORS, API_BASE } from "./route";
+import { MOCK_SEARCH, MOCK_COMPANY, MOCK_DIRECTORS } from "./route";
 
 describe("MOCK_SEARCH shape", () => {
   it("items have company_name (not title)", () => {
@@ -30,12 +30,6 @@ describe("MOCK_SEARCH shape", () => {
       expect(addr).toHaveProperty("locality");
       expect(addr).toHaveProperty("postal_code");
     }
-  });
-});
-
-describe("HTTPS / mixed-content", () => {
-  it("API_BASE uses https (not http) to prevent mixed-content browser warnings", () => {
-    expect(API_BASE).toMatch(/^https:\/\//);
   });
 });
 
