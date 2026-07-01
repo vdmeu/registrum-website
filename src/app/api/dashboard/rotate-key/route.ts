@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { verifySessionCookie, SESSION_COOKIE } from "@/lib/dashboard-auth";
 import { getSupabase } from "@/lib/supabase";
-
-function generateKey(): { fullKey: string; prefix: string; keyHash: string } {
-  const randomPart = crypto.randomBytes(16).toString("hex");
-  const fullKey = `reg_live_${randomPart}`;
-  const prefix = fullKey.slice(0, 14); // "reg_live_" (9) + 5 hex
-  const keyHash = bcrypt.hashSync(fullKey, 10);
-  return { fullKey, prefix, keyHash };
-}
+import { generateKey } from "@/lib/apiKeys";
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();

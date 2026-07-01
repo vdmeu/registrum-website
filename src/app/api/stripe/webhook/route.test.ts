@@ -50,6 +50,21 @@ vi.mock("@/lib/resend", () => ({
   }),
 }));
 
+// Plan economics are the single source of truth from GET /v1/plans (R3) — mock
+// so the test is hermetic and asserts prices come from here, not hardcoded.
+vi.mock("@/lib/plans", () => ({
+  getPlans: async () => ({
+    free: { monthly_limit: 50, daily_limit: 5, burst_limit: 10, price_gbp: 0, features: [] },
+    web: { monthly_limit: 500, daily_limit: 50, burst_limit: 30, price_gbp: 9, features: [] },
+    pro: { monthly_limit: 4000, daily_limit: 400, burst_limit: 100, price_gbp: 49, features: [] },
+  }),
+}));
+
+const mockCaptureException = vi.fn();
+vi.mock("@/lib/sentry", () => ({
+  captureException: (...args: unknown[]) => mockCaptureException(...args),
+}));
+
 vi.mock("next/server", () => ({
   NextResponse: {
     json: (data: unknown, init?: { status?: number }) => ({
@@ -303,5 +318,39 @@ describe("POST /api/stripe/webhook", () => {
     expect(res.status).toBe(200);
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  // ── R3: Telegram alert price comes from GET /v1/plans, not a hardcoded string ─
+
+  it("Telegram subscriber alert uses the plan price from GET /v1/plans", async () => {
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "bot123");
+    vi.stubEnv("TELEGRAM_CHAT_ID", "chat456");
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("{}", { status: 200 }),
+    );
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    await POST(makeReq("{}"));
+    const telegramCall = fetchSpy.mock.calls.find(([url]) =>
+      String(url).includes("api.telegram.org"),
+    );
+    expect(telegramCall).toBeTruthy();
+    const sentBody = JSON.parse((telegramCall![1] as RequestInit).body as string);
+    expect(sentBody.text).toContain("£49/month");
+    fetchSpy.mockRestore();
+    vi.unstubAllEnvs();
+    vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test");
+  });
+
+  // ── R4: unexpected handler errors are reported to Sentry ──────────────────────
+
+  it("reports unexpected handler errors to Sentry and returns 500", async () => {
+    mockMaybeSingle.mockRejectedValue(new Error("boom"));
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(500);
+    expect(mockCaptureException).toHaveBeenCalledOnce();
+    expect(mockCaptureException.mock.calls[0][1]).toMatchObject({
+      route: "stripe/webhook",
+    });
   });
 });

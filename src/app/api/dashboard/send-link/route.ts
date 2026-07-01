@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createMagicToken } from "@/lib/dashboard-auth";
 import { getResend } from "@/lib/resend";
 import { getSupabase } from "@/lib/supabase";
-
-const SITE_URL = "https://registrum.co.uk";
+import { SITE_URL } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   let email: string;

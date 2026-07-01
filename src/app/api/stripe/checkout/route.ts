@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-
-const SITE_URL = "https://registrum.co.uk";
+import { SITE_URL } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   let plan: "web" | "pro" = "pro";
