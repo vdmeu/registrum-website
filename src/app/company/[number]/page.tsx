@@ -351,6 +351,13 @@ export default async function CompanyPage({
                 companyName={company.company_name}
                 companyNumber={number}
               />
+              <p className="mt-4 text-xs text-[#3D5275]">
+                Prefer not to create an account?{" "}
+                <a href="/report" className="text-[#4F7BFF] hover:underline">
+                  Get a one-off intelligence report for £4.99 →
+                </a>
+                {" "}No account needed, AI risk verdict included.
+              </p>
             </div>
 
             {/* Demo financials */}

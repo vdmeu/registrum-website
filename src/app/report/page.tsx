@@ -137,11 +137,12 @@ export default function ReportPage() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="mb-4 text-sm font-medium text-[#4F7BFF]">Pay once &middot; No account &middot; Instant delivery</p>
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            UK Company Intelligence Report
+            Find out who you&apos;re dealing with before you sign
           </h1>
           <p className="mt-5 text-lg text-[#7A8FAD] leading-relaxed">
-            Director network, PSC ownership chain, filing compliance, risk flags,
-            and a plain-English verdict from Claude. Delivered to your inbox in under 60 seconds.
+            One report. Director network, PSC ownership chain, risk flags, and a plain-English
+            AI verdict - LOW, MEDIUM, or HIGH risk with a one-sentence recommendation.
+            Delivered to your inbox in under 60 seconds.
           </p>
           <div className="mt-4 flex items-center justify-center gap-4">
             <p className="text-3xl font-bold text-white">

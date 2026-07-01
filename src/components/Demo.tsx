@@ -343,6 +343,12 @@ export default function Demo() {
               >
                 Full profile →
               </a>
+              <a
+                href="/report"
+                className="rounded-md border border-white/10 px-3 py-1 text-xs font-medium text-[#E8F0FE] transition-colors hover:border-white/20 hover:bg-white/5"
+              >
+                Report — £4.99 →
+              </a>
             </div>
           </div>
 
