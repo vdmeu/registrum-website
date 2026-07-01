@@ -99,12 +99,16 @@ export async function POST(req: NextRequest) {
         const firstName = firstNameFromEmail(email);
 
         if (existingKey) {
-          // R1 path: plan update goes through the internal API.
-          // Note: stripe IDs (customer/subscription) are set separately via
-          // Supabase direct write since UpdatePlanRequest only accepts plan +
-          // plan_expires_at (matches the internal API contract in routes_internal.py).
+          // R1 path: plan update goes through the internal API, carrying the
+          // stripe ids so a later subscription.deleted / payment_failed webhook
+          // can locate this key by stripe_subscription_id and downgrade it
+          // (parity with the direct-write path below).
           if (useInternalApi()) {
-            const updated = await updateApiKeyPlan(existingKey.id, { plan });
+            const updated = await updateApiKeyPlan(existingKey.id, {
+              plan,
+              stripe_customer_id: session.customer as string | null,
+              stripe_subscription_id: session.subscription as string | null,
+            });
             if (!updated) {
               console.error("api_keys updateApiKeyPlan returned null for id:", existingKey.id);
               break;
@@ -156,8 +160,14 @@ export async function POST(req: NextRequest) {
         let prefix: string;
 
         if (useInternalApi()) {
-          // R1 path: create via internal API.
-          const row = await createApiKey({ plan, label: email });
+          // R1 path: create via internal API, persisting the stripe ids so this
+          // paid key can later be located + downgraded by subscription webhooks.
+          const row = await createApiKey({
+            plan,
+            label: email,
+            stripe_customer_id: session.customer as string | null,
+            stripe_subscription_id: session.subscription as string | null,
+          });
           fullKey = row.full_key;
           prefix = row.key_prefix;
         } else {

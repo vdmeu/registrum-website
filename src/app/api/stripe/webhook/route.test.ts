@@ -417,6 +417,33 @@ describe("POST /api/stripe/webhook — R1 flag ON", () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  it("checkout.session.completed (new key): forwards stripe IDs through createApiKey", async () => {
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInternalCreateApiKey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stripe_customer_id: "cus_test_abc",
+        stripe_subscription_id: "sub_test_xyz",
+      })
+    );
+  });
+
+  it("checkout.session.completed (existing key upgrade): forwards stripe IDs through updateApiKeyPlan", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInternalUpdateApiKeyPlan).toHaveBeenCalledWith(
+      "existing-key-id",
+      expect.objectContaining({
+        plan: "pro",
+        stripe_customer_id: "cus_test_abc",
+        stripe_subscription_id: "sub_test_xyz",
+      })
+    );
+  });
+
   it("checkout.session.completed (new key): still sends key delivery email with full_key from API", async () => {
     mockInternalCreateApiKey.mockResolvedValue({
       full_key: "reg_live_fromapi123456789abcdef01234",

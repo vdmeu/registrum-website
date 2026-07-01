@@ -111,6 +111,23 @@ describe("createApiKey", () => {
     );
   });
 
+  it("forwards stripe_customer_id / stripe_subscription_id when provided (paid path)", async () => {
+    const row = makeApiKeyRow({ plan: "pro" });
+    mockFetch.mockResolvedValueOnce(okResponse(row));
+
+    await createApiKey({
+      plan: "pro",
+      label: "pro@example.com",
+      stripe_customer_id: "cus_abc",
+      stripe_subscription_id: "sub_xyz",
+    });
+
+    const [, opts] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(opts.body as string);
+    expect(body.stripe_customer_id).toBe("cus_abc");
+    expect(body.stripe_subscription_id).toBe("sub_xyz");
+  });
+
   it("throws when INTERNAL_API_SECRET is unset", async () => {
     vi.stubEnv("INTERNAL_API_SECRET", "");
     await expect(createApiKey({ plan: "free", label: "test@example.com" })).rejects.toThrow(
@@ -163,6 +180,26 @@ describe("updateApiKeyPlan", () => {
     const result = await updateApiKeyPlan("uuid-x", { plan: "free" });
 
     expect(result).toBeNull();
+  });
+
+  it("forwards stripe_customer_id / stripe_subscription_id when provided (paid upgrade)", async () => {
+    const row = makeApiKeyRow({ plan: "pro" });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: "success", api_key: row }),
+    });
+
+    await updateApiKeyPlan("uuid-1234", {
+      plan: "pro",
+      stripe_customer_id: "cus_abc",
+      stripe_subscription_id: "sub_xyz",
+    });
+
+    const [, opts] = mockFetch.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(opts.body as string);
+    expect(body.stripe_customer_id).toBe("cus_abc");
+    expect(body.stripe_subscription_id).toBe("sub_xyz");
   });
 
   it("throws on non-404 API errors", async () => {

@@ -37,11 +37,17 @@ export interface CreateKeyOptions {
   label?: string | null;
   plan_expires_at?: string | null;
   is_test?: boolean;
+  /** Stripe ids, so a paid key can later be located + downgraded by webhooks. */
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
 }
 
 export interface UpdatePlanOptions {
   plan?: string | null;
   plan_expires_at?: string | null;
+  /** Stripe ids to set on the key (omit to leave unchanged). */
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
 }
 
 function getApiUrl(): string {
@@ -75,6 +81,8 @@ export async function createApiKey(opts: CreateKeyOptions): Promise<ApiKeyRow> {
       label: opts.label ?? null,
       plan_expires_at: opts.plan_expires_at ?? null,
       is_test: opts.is_test ?? false,
+      stripe_customer_id: opts.stripe_customer_id ?? null,
+      stripe_subscription_id: opts.stripe_subscription_id ?? null,
     }),
   });
 
