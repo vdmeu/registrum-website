@@ -310,8 +310,8 @@ function fmtNum(n: number | null | undefined): string {
 function buildReportEmail(companyNumber: string, report: Record<string, unknown>, verdict: string): string {
   const profile = report.profile as Record<string, unknown> | undefined;
   const risk_flags = report.risk_flags as Record<string, boolean> | undefined;
-  const directorsRaw = report.directors as Array<{ current_directors?: DirectorForSvg[] }> | null | undefined;
-  const currentDirs = (Array.isArray(directorsRaw) ? directorsRaw[0]?.current_directors : null) ?? [];
+  const directorsRaw = report.directors as { current_directors?: DirectorForSvg[] } | null | undefined;
+  const currentDirs = directorsRaw?.current_directors ?? [];
   const financials = report.financials as Record<string, unknown> | null | undefined;
   const psc_chain = report.psc_chain as { pscs?: Array<Record<string, unknown>> } | null | undefined;
 
