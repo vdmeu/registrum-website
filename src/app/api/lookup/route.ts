@@ -6,8 +6,24 @@ import { getPlans } from "@/lib/plans";
 
 const API_URL = "https://api.registrum.co.uk/v1";
 const FREE_DAILY_LIMIT = 10;
+// Search is discovery-only so the cap is more generous than detail lookups,
+// but it MUST exist: every anonymous search spends the shared demo key, and
+// without a per-IP cap a single client could exhaust it for everyone (D3).
+const SEARCH_DAILY_LIMIT = 30;
 
-async function checkLimit(ip: string, feature: string): Promise<{ allowed: boolean }> {
+function clientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+async function checkLimit(
+  ip: string,
+  feature: string,
+  limit: number = FREE_DAILY_LIMIT,
+): Promise<{ allowed: boolean }> {
   const today = new Date().toISOString().slice(0, 10);
   const identifier = createHash("sha256").update(`${ip}:${feature}`).digest("hex");
   const { data, error } = await getSupabase().rpc("increment_web_lookup", {
@@ -15,7 +31,7 @@ async function checkLimit(ip: string, feature: string): Promise<{ allowed: boole
     p_date: today,
   });
   if (error) return { allowed: true };
-  return { allowed: (data as number) <= FREE_DAILY_LIMIT };
+  return { allowed: (data as number) <= limit };
 }
 
 export async function GET(req: NextRequest) {
@@ -31,8 +47,19 @@ export async function GET(req: NextRequest) {
 
   const apiHeaders = { "X-API-Key": apiKey };
 
-  // Search queries are free — just discovery, no rate limit
+  // Search is discovery-only, but it still spends the shared demo key — cap it
+  // per IP BEFORE the upstream call so one client can't drain the key (D3).
   if (q) {
+    const { allowed } = await checkLimit(clientIp(req), "search", SEARCH_DAILY_LIMIT);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: "You've reached today's free search limit. Sign up for a free API key to continue.",
+        },
+        { status: 429 },
+      );
+    }
     const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}&limit=10`, {
       headers: apiHeaders,
       next: { revalidate: 60 },
@@ -80,11 +107,7 @@ export async function GET(req: NextRequest) {
     }
   } else {
     // Anonymous: IP rate limit per feature
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      req.headers.get("x-real-ip") ??
-      "unknown";
-    const { allowed } = await checkLimit(ip, feature);
+    const { allowed } = await checkLimit(clientIp(req), feature);
     if (!allowed) {
       return NextResponse.json(
         {
