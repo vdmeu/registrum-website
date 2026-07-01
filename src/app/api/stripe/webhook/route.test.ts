@@ -3,6 +3,9 @@ import type Stripe from "stripe";
 
 // Env vars must be set before the module is imported
 vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test");
+vi.stubEnv("USE_API_INTERNAL_API_KEYS", "false");
+vi.stubEnv("REGISTRUM_API_URL", "https://api-staging.test");
+vi.stubEnv("INTERNAL_API_SECRET", "test-secret-abc");
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,14 @@ vi.mock("@/lib/plans", () => ({
 const mockCaptureException = vi.fn();
 vi.mock("@/lib/sentry", () => ({
   captureException: (...args: unknown[]) => mockCaptureException(...args),
+}));
+
+// R1 internal API mock (for flag-ON tests)
+const mockInternalCreateApiKey = vi.fn();
+const mockInternalUpdateApiKeyPlan = vi.fn();
+vi.mock("@/lib/internal-api", () => ({
+  createApiKey: (...args: unknown[]) => mockInternalCreateApiKey(...args),
+  updateApiKeyPlan: (...args: unknown[]) => mockInternalUpdateApiKeyPlan(...args),
 }));
 
 vi.mock("next/server", () => ({
@@ -352,5 +363,104 @@ describe("POST /api/stripe/webhook", () => {
     expect(mockCaptureException.mock.calls[0][1]).toMatchObject({
       route: "stripe/webhook",
     });
+  });
+});
+
+// ── R1: USE_API_INTERNAL_API_KEYS=true routes writes through internal API ──────
+//
+// These tests will FAIL until stripe/webhook/route.ts checks the flag and
+// calls createApiKey / updateApiKeyPlan from @/lib/internal-api.
+
+describe("POST /api/stripe/webhook — R1 flag ON", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv("USE_API_INTERNAL_API_KEYS", "true");
+
+    // Default Stripe sig succeeds
+    mockConstructEvent.mockReturnValue(checkoutEvent("pro"));
+    // Default: no existing key
+    mockSelect.mockReturnValue({ eq: mockSelectEq1 });
+    mockSelectEq1.mockReturnValue({ eq: mockSelectEq2 });
+    mockSelectEq2.mockReturnValue({ limit: mockLimit });
+    mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle });
+    mockMaybeSingle.mockResolvedValue({ data: null });
+    // Session delete succeeds (web_sessions — still direct Supabase, not api_keys)
+    mockSessionDelete.mockReturnValue({ eq: mockDeleteEq });
+    mockDeleteEq.mockResolvedValue({ error: null });
+    // Email send succeeds
+    mockEmailSend.mockResolvedValue({ data: {}, error: null });
+    // Internal API succeeds
+    mockInternalCreateApiKey.mockResolvedValue({
+      id: "api-row-uuid",
+      key_prefix: "reg_live_ab123",
+      plan: "pro",
+      is_active: true,
+      calls_this_month: 0,
+      label: "buyer@example.com",
+      full_key: "reg_live_ab123cdef456789abcdef01234567",
+    });
+    mockInternalUpdateApiKeyPlan.mockResolvedValue({
+      id: "existing-key-id",
+      key_prefix: "reg_live_abcde",
+      plan: "pro",
+      is_active: true,
+    });
+  });
+
+  it("checkout.session.completed (new key): calls createApiKey, NOT Supabase insert", async () => {
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInternalCreateApiKey).toHaveBeenCalledOnce();
+    expect(mockInternalCreateApiKey).toHaveBeenCalledWith(
+      expect.objectContaining({ plan: "pro", label: "buyer@example.com" })
+    );
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it("checkout.session.completed (new key): still sends key delivery email with full_key from API", async () => {
+    mockInternalCreateApiKey.mockResolvedValue({
+      full_key: "reg_live_fromapi123456789abcdef01234",
+      key_prefix: "reg_live_ab123",
+      plan: "pro",
+    });
+    await POST(makeReq("{}"));
+    expect(mockEmailSend).toHaveBeenCalledOnce();
+    const emailArg = mockEmailSend.mock.calls[0][0];
+    expect(emailArg.html).toContain("reg_live_fromapi123456789abcdef01234");
+  });
+
+  it("checkout.session.completed (existing key upgrade): calls updateApiKeyPlan, NOT Supabase update", async () => {
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "existing-key-id", key_prefix: "reg_live_abcde" },
+    });
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInternalUpdateApiKeyPlan).toHaveBeenCalledOnce();
+    expect(mockInternalUpdateApiKeyPlan).toHaveBeenCalledWith(
+      "existing-key-id",
+      expect.objectContaining({ plan: "pro" })
+    );
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("customer.subscription.deleted: calls updateApiKeyPlan for plan downgrade, NOT direct Supabase update", async () => {
+    mockConstructEvent.mockReturnValue(subscriptionDeletedEvent("sub_test_xyz", "cus_test_abc"));
+    // The handler must look up the key id by stripe_subscription_id, then call updateApiKeyPlan
+    mockSelect.mockReturnValue({ eq: mockSelectEq1 });
+    mockSelectEq1.mockReturnValue({ eq: mockSelectEq2 });
+    mockSelectEq2.mockReturnValue({ limit: mockLimit });
+    mockLimit.mockReturnValue({ maybeSingle: mockMaybeSingle });
+    mockMaybeSingle.mockResolvedValue({
+      data: { id: "downgrade-key-id", key_prefix: "reg_live_x" },
+    });
+
+    const res = await POST(makeReq("{}"));
+    expect(res.status).toBe(200);
+    expect(mockInternalUpdateApiKeyPlan).toHaveBeenCalledOnce();
+    expect(mockInternalUpdateApiKeyPlan).toHaveBeenCalledWith(
+      "downgrade-key-id",
+      expect.objectContaining({ plan: "free" })
+    );
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 });
